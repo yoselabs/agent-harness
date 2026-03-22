@@ -1,6 +1,6 @@
 # Agent Harness — harness engineering for AI agents
 
-Single CLI that detects project stacks, runs all quality checks, audits harness completeness, and initializes new projects. Replaces hand-maintained Makefiles.
+Single CLI that detects project stacks, runs all quality checks, audits harness completeness, and initializes new projects. Your Makefile delegates to it — `make lint` calls `agent-harness lint`.
 
 ## The problem
 
