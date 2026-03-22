@@ -39,13 +39,36 @@ tests/
   test_cli.py, test_config.py, test_detect.py, test_runner.py
 ```
 
+## Convention: every check file is self-documented
+
+Same pattern as Rego policies. Every check file has a module docstring:
+
+```python
+"""
+<Check name>.
+
+WHAT: <One sentence — what this check does>
+
+WHY: <2-3 sentences — why AI agents need this specific check>
+
+WITHOUT IT: <Concrete failure scenario>
+
+FIX: <How to resolve — exact command or action>
+
+REQUIRES: <External tool(s) needed>
+"""
+```
+
+The file IS the documentation. An agent reading the file understands everything — no external docs needed. When a user challenges a check, the agent reads the docstring and cites the WHY.
+
 ## Tasks
 1. Rename ai_harness → agent_harness (module name, imports, pyproject.toml)
 2. Create stacks/ directory structure
-3. Move checks into per-stack directories (one file per check)
-4. Move tests to mirror structure
+3. Move checks into per-stack directories (one file per check, with WHAT/WHY/WITHOUT IT/FIX docstrings)
+4. Move tests to mirror structure (one test file per check file)
 5. Update lint.py to discover checks from stacks/
 6. Update all imports
-7. Move config templates into per-stack templates.py
+7. Move config templates from K skill's python.md/docker.md into per-stack templates.py
 8. Verify all tests pass
 9. Test on aggre
+10. Strip K skill's python.md and docker.md to guidance-only (non-deterministic advice)
