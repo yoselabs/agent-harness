@@ -1,5 +1,5 @@
 [project]
-name = "ai-harness"
+name = "agent-harness"
 version = "0.1.0"
 description = "AI-first harness engineering — deterministic controls for AI agents"
 requires-python = ">=3.12"
@@ -9,7 +9,7 @@ dependencies = [
 ]
 
 [project.scripts]
-ai-harness = "ai_harness.cli:cli"
+agent-harness = "ai_harness.cli:cli"
 
 [dependency-groups]
 dev = [

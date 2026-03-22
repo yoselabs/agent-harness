@@ -1,4 +1,4 @@
-# ai-harness — AI-first harness engineering CLI
+# agent-harness — AI-first harness engineering CLI
 
 Deterministic controls for AI agents. Detects project stacks, runs checks, initializes configs.
 
@@ -7,8 +7,8 @@ Deterministic controls for AI agents. Detects project stacks, runs checks, initi
 - Run tests: `uv run pytest tests/`
 - Lint: `uv run ruff check src/ tests/`
 - Fix: `uv run ruff check --fix src/ tests/ && uv run ruff format src/ tests/`
-- Run CLI: `uv run ai-harness --help`
-- Run CLI on aggre: `cd ~/Workspaces/aggre && uv run --project ~/Workspaces/ai-harness ai-harness lint`
+- Run CLI: `uv run agent-harness --help`
+- Run CLI on aggre: `cd ~/Workspaces/aggre && uv run --project ~/Workspaces/agent-harness agent-harness lint`
 
 ## Architecture
 
