@@ -8,7 +8,7 @@ from agent_harness.stacks.universal.conftest_gitignore_check import run_conftest
 from agent_harness.stacks.python.ruff_check import run_ruff
 from agent_harness.stacks.python.ty_check import run_ty
 from agent_harness.stacks.python.conftest_python_check import run_conftest_python
-from agent_harness.stacks.python.file_length_check import run_file_length
+from agent_harness.stacks.universal.file_length_check import run_file_length
 from agent_harness.stacks.docker.hadolint_check import run_hadolint
 from agent_harness.stacks.docker.conftest_dockerfile_check import run_conftest_dockerfile
 from agent_harness.stacks.docker.conftest_compose_check import run_conftest_compose
@@ -23,13 +23,13 @@ def run_lint(project_dir: Path) -> list[CheckResult]:
     results.append(run_conftest_gitignore(project_dir, stacks=config.stacks))
     results.append(run_conftest_json(project_dir, exclude_patterns=exclude))
     results.append(run_yamllint(project_dir, exclude_patterns=exclude))
+    results.append(run_file_length(project_dir, exclude_patterns=exclude))
 
     # Python checks
     if "python" in config.stacks:
         results.extend(run_ruff(project_dir))  # returns list
         results.append(run_ty(project_dir))
         results.append(run_conftest_python(project_dir))
-        results.append(run_file_length(project_dir, config.python.max_file_lines))
 
     # Docker checks
     if "docker" in config.stacks:
