@@ -35,3 +35,20 @@ def test_load_config_disable_stack(tmp_path):
     (tmp_path / ".agent-harness.yml").write_text("stacks: [docker]\n")
     config = load_config(tmp_path)
     assert "python" not in config.stacks
+
+
+def test_load_config_javascript(tmp_path):
+    (tmp_path / "package.json").write_text('{"name":"x"}')
+    (tmp_path / ".agent-harness.yml").write_text(
+        "stacks: [javascript]\njavascript:\n  coverage_threshold: 90\n"
+    )
+    config = load_config(tmp_path)
+    assert "javascript" in config.stacks
+    assert config.javascript.coverage_threshold == 90
+
+
+def test_load_config_javascript_defaults(tmp_path):
+    (tmp_path / "package.json").write_text('{"name":"x"}')
+    config = load_config(tmp_path)
+    assert "javascript" in config.stacks
+    assert config.javascript.coverage_threshold == 80
