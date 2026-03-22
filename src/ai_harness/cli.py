@@ -1,5 +1,6 @@
 # src/ai_harness/cli.py
 import click
+from pathlib import Path
 
 @click.group()
 @click.version_option()
@@ -9,7 +10,13 @@ def cli():
 @cli.command()
 def detect():
     """Detect project stacks (Python, Docker, etc.)."""
-    click.echo("detect: not implemented")
+    from ai_harness.detect import detect_stacks
+    stacks = detect_stacks(Path.cwd())
+    if stacks:
+        for stack in sorted(stacks):
+            click.echo(stack)
+    else:
+        click.echo("no stacks detected")
 
 @cli.command()
 def lint():

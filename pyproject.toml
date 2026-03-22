@@ -11,6 +11,11 @@ dependencies = [
 [project.scripts]
 ai-harness = "ai_harness.cli:cli"
 
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
