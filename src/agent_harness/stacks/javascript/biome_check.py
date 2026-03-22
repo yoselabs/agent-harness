@@ -29,14 +29,17 @@ def run_biome(project_dir: Path) -> list[CheckResult]:
     else:
         prefix = ["npx", "@biomejs/biome"]
 
+    # Use VCS ignore to skip .gitignore'd dirs (dist/, .astro/, node_modules/)
+    vcs_flags = ["--vcs-enabled=true", "--vcs-use-ignore-file=true"]
+
     results.append(run_check(
         "biome:lint",
-        prefix + ["lint", "."],
+        prefix + ["lint", "."] + vcs_flags,
         cwd=str(project_dir),
     ))
     results.append(run_check(
         "biome:format",
-        prefix + ["format", "--check", "."],
+        prefix + ["format", "--check", "."] + vcs_flags,
         cwd=str(project_dir),
     ))
     return results
