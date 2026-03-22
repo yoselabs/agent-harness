@@ -20,7 +20,7 @@ def run_lint(project_dir: Path) -> list[CheckResult]:
     results: list[CheckResult] = []
 
     # Universal checks
-    results.append(run_conftest_gitignore(project_dir))
+    results.append(run_conftest_gitignore(project_dir, stacks=config.stacks))
     results.append(run_conftest_json(project_dir, exclude_patterns=exclude))
     results.append(run_yamllint(project_dir, exclude_patterns=exclude))
 
