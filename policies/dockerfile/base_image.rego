@@ -1,7 +1,19 @@
 package dockerfile.base_image
 
-# Dockerfile base image policy.
-# Warns when Alpine base is used with stacks that have musl libc issues.
+# BASE IMAGE — no Alpine for musl-sensitive stacks
+#
+# WHAT: Warns when Alpine base is used with Python, Node, or Ruby stacks
+# that have musl libc compatibility issues.
+#
+# WHY: Agents pick Alpine because it's small, but musl libc breaks native
+# extensions in Python/Node/Ruby. Packages with C bindings (numpy, bcrypt,
+# sharp) either fail to build or crash at runtime.
+#
+# WITHOUT IT: Runtime crashes from C extension incompatibility that only
+# surface in production. Works in dev, breaks in the container.
+#
+# FIX: Use a -slim (Debian) variant instead of Alpine
+# (e.g., python:3.12-bookworm-slim, node:22-bookworm-slim).
 #
 # Input: flat array of Dockerfile instructions [{Cmd, Flags, Value, Stage}, ...]
 

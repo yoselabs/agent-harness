@@ -1,9 +1,19 @@
 package dockerfile.secrets
 
-# Dockerfile secrets policy.
-# Detects sensitive values passed via ENV or ARG instructions.
-# Agents frequently hardcode API keys and passwords in Dockerfiles.
-# Derived from Trivy DS-0031 / Rally Health CTNRSEC-0002.
+# SECRETS — no credentials in ENV/ARG
+#
+# WHAT: Detects sensitive values (passwords, API keys, tokens) passed via
+# ENV or ARG instructions in Dockerfiles.
+#
+# WHY: Agents hardcode API keys and passwords in ENV/ARG. Build args are
+# visible in image history via `docker history`. ENV values persist in
+# the final image. Anyone with image access can extract them.
+#
+# WITHOUT IT: Secrets leaked in image layers, extractable by anyone with
+# image access. Credentials end up in registries and CI logs.
+#
+# FIX: Use runtime environment variables or mounted secrets instead.
+# Never bake secrets into the image at build time.
 #
 # Input: flat array of Dockerfile instructions [{Cmd, Flags, Value, Stage}, ...]
 

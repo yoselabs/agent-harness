@@ -1,9 +1,22 @@
 package python.test_isolation
 
-# pyproject.toml policy: test environment isolation.
-# Ensures pytest-env is configured so agents can't accidentally hit production.
+# TEST ISOLATION — pytest-env prevents production DB hits
 #
-# Input: parsed pyproject.toml (TOML → JSON)
+# WHAT: Ensures pytest-env is configured to inject test environment variables
+# before pydantic-settings reads them.
+#
+# WHY: Without pytest-env, agents run tests against whatever DATABASE_URL is
+# in the shell. On a dev machine, that might be the production database.
+# Separate test DB port (5433 vs 5432) prevents accidental writes to prod.
+#
+# WITHOUT IT: Agent runs `make test`, tests execute against production
+# database. Data gets corrupted or deleted with no warning.
+#
+# FIX: Add pytest-env to dev dependencies and configure env entries in
+# [tool.pytest.ini_options] with test-specific values (e.g., DATABASE_URL
+# pointing to localhost:5433/test_db).
+#
+# Input: parsed pyproject.toml (TOML -> JSON)
 
 import rego.v1
 

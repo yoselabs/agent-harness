@@ -1,9 +1,22 @@
 package python.coverage
 
-# pyproject.toml policy: coverage configuration for AI agent noise reduction.
-# Ensures coverage output is optimized so agents see gaps, not green files.
+# COVERAGE CONFIG — show gaps, not green files
 #
-# Input: parsed pyproject.toml (TOML → JSON)
+# WHAT: Ensures coverage output is optimized so agents see gaps, not noise.
+#
+# WHY (skip_covered): With 95% coverage, most files are green. Without
+# skip_covered, the agent sees 50+ fully-covered files drowning the 2 that
+# actually need work. Signal-to-noise ratio collapses.
+# WHY (branch): Line-only coverage misses untested if/else branches. Code
+# can have 100% line coverage but skip entire conditional paths.
+#
+# WITHOUT IT: Agent wastes time scrolling through green files looking for
+# the one uncovered module. Untested branches silently pass coverage gates.
+#
+# FIX: Set skip_covered = true in [tool.coverage.report] and branch = true
+# in [tool.coverage.run].
+#
+# Input: parsed pyproject.toml (TOML -> JSON)
 
 import rego.v1
 

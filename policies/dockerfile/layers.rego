@@ -1,8 +1,19 @@
 package dockerfile.layers
 
-# Dockerfile layer ordering policy.
-# Ensures dependency manifests are copied before source code,
-# and dependency install happens between manifest copy and source copy.
+# LAYER ORDERING — deps before source
+#
+# WHAT: Ensures dependency manifests are copied before source code, with
+# dependency install between manifest copy and source copy.
+#
+# WHY: Agents frequently generate `COPY . .` before dependency install,
+# busting Docker cache on every code change. Every build then downloads
+# all dependencies from scratch instead of using the cached layer.
+#
+# WITHOUT IT: 5-minute builds that should take 10 seconds. Every code
+# change triggers a full dependency reinstall.
+#
+# FIX: Copy dependency manifests first (pyproject.toml, package.json, etc.),
+# run the install command, then COPY source code.
 #
 # Input: flat array of Dockerfile instructions [{Cmd, Flags, Value, Stage}, ...]
 

@@ -1,7 +1,18 @@
 package dockerfile.cache
 
-# Dockerfile cache mount policy.
-# Ensures dependency install commands use --mount=type=cache.
+# CACHE MOUNT — persist dependency caches between builds
+#
+# WHAT: Ensures dependency install commands use --mount=type=cache.
+#
+# WHY: Without cache mounting, dependency caches are discarded between builds.
+# Agents don't know to add --mount=type=cache flags. Each rebuild downloads
+# all packages from the internet even when nothing changed.
+#
+# WITHOUT IT: Every rebuild downloads all packages from the internet.
+# pip/npm/cargo caches vanish after each build layer completes.
+#
+# FIX: Add --mount=type=cache,target=<cache-dir> to RUN instructions
+# (e.g., /root/.cache/uv for uv, /root/.cache/pip for pip, /root/.npm for npm).
 #
 # Input: flat array of Dockerfile instructions [{Cmd, Flags, Value, Stage}, ...]
 

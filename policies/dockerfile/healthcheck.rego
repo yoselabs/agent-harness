@@ -1,9 +1,18 @@
 package dockerfile.healthcheck
 
-# Dockerfile HEALTHCHECK policy.
-# Ensures at least one HEALTHCHECK instruction exists.
-# Without it, orchestrators can't detect unhealthy containers.
-# Derived from CIS Docker Benchmark 4.6 / Trivy DS-0026.
+# HEALTHCHECK — orchestrator liveness detection
+#
+# WHAT: Ensures at least one HEALTHCHECK instruction exists in the Dockerfile.
+#
+# WHY: Without healthchecks, orchestrators can't detect unhealthy containers.
+# Load balancers route traffic to dead services. Deployments report success
+# while the app crashes in a loop. CIS Docker Benchmark 4.6 / Trivy DS-0026.
+#
+# WITHOUT IT: Silent failures — service is down but everything reports green.
+# Rolling deployments replace healthy containers with broken ones.
+#
+# FIX: Add `HEALTHCHECK CMD curl -f http://localhost:<port>/health || exit 1`
+# (or a similar probe) to the Dockerfile.
 #
 # Input: flat array of Dockerfile instructions [{Cmd, Flags, Value, Stage}, ...]
 

@@ -1,12 +1,23 @@
 package compose.escaping
 
-# Docker Compose environment variable escaping policy.
-# Detects bare $ in environment values that Docker Compose will interpolate.
+# DOLLAR ESCAPING — bare $ corrupts values silently
 #
-# Docker Compose interpolates $VAR and ${VAR} in values. A bare $ (common in
-# bcrypt hashes like $2a$12$..., or passwords with special chars) will be
-# silently interpreted as a variable reference, corrupting the value.
-# Must be escaped as $$ in compose files.
+# WHAT: Detects bare $ in environment values that Docker Compose will
+# interpolate as variable references.
+#
+# WHY: Docker Compose interpolates $VAR in values. A bcrypt hash like
+# $2a$12$... gets silently corrupted — Compose interprets $2a as a variable
+# reference and replaces it with empty string. Agents generate passwords
+# and hashes without knowing about this interpolation.
+#
+# WITHOUT IT: Passwords silently corrupted, auth fails with no error.
+# Hours of debugging because the value looks correct in the compose file
+# but is mangled at runtime.
+#
+# FIX: Escape all literal $ as $$ in compose environment values
+# (e.g., $$2a$$12$$... for bcrypt hashes).
+#
+# Input: parsed docker-compose YAML
 
 import rego.v1
 

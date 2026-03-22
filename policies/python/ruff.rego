@@ -1,9 +1,25 @@
 package python.ruff
 
-# pyproject.toml policy: ruff configuration for AI agent readability.
-# Enforces critical ruff settings that affect agent output quality.
+# RUFF CONFIG — agent-readable linter output
 #
-# Input: parsed pyproject.toml (TOML → JSON)
+# WHAT: Enforces critical ruff settings: concise output, adequate line length,
+# and complexity limits.
+#
+# WHY (concise): Agent sees `file.py:42:5 E501` (one line) vs a 5-line context
+# block. The #1 knob for agent readability — without it, lint output floods
+# the context window.
+# WHY (line-length >= 120): Short line lengths cause agents to constantly
+# reformat lines that are fine, wasting cycles on cosmetic changes.
+# WHY (complexity): Agents generate deeply nested functions when not
+# constrained. A complexity limit forces decomposition into testable units.
+#
+# WITHOUT IT: Noisy multi-line lint output, constant reformatting churn,
+# and 200-line monolith functions that no one can review.
+#
+# FIX: Set output-format = "concise", line-length = 140, and
+# mccabe max-complexity = 10 in [tool.ruff] / [tool.ruff.lint.mccabe].
+#
+# Input: parsed pyproject.toml (TOML -> JSON)
 
 import rego.v1
 

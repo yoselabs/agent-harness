@@ -1,7 +1,25 @@
 package compose.services
 
-# Docker Compose service policy.
-# Enforces: healthchecks, restart policies, port binding safety.
+# SERVICE POLICY — healthcheck, restart, port safety
+#
+# WHAT: Enforces healthchecks, restart policies, and safe port bindings
+# on all long-running compose services.
+#
+# WHY (healthcheck): dokctl and Traefik depend on healthchecks to route
+# traffic and detect failed deployments. Without them, load balancers
+# route to dead containers and deployments report success while crashing.
+# WHY (restart): Without a restart policy, crashed services stay down
+# permanently. A single OOM or uncaught exception takes the service offline.
+# WHY (port binding): Docker bypasses the host firewall when binding to
+# 0.0.0.0. Services meant for localhost become internet-accessible.
+#
+# WITHOUT IT: Silent outages, permanent crashes, and accidentally exposed
+# internal services.
+#
+# FIX: Add healthcheck: with a probe command. Add restart: unless-stopped.
+# Bind ports to 127.0.0.1 instead of 0.0.0.0.
+#
+# Input: parsed docker-compose YAML
 
 import rego.v1
 

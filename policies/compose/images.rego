@@ -1,10 +1,26 @@
 package compose.images
 
-# Docker Compose image policy.
-# Enforces: no build directives, mutable tags require pull_policy: always.
+# IMAGE POLICY — no build, pin tags, no implicit latest
 #
-# OWN_IMAGE_PREFIX-based SHA pinning is handled via data injection:
-#   conftest test --data '{"own_image_prefix": "ghcr.io/myorg/"}' ...
+# WHAT: Enforces no build directives in compose, requires pull_policy for
+# mutable tags, and pins own images by SHA or unique tag.
+#
+# WHY (no build): Building images on the server is non-deterministic — same
+# source can produce different images depending on cache state and timing.
+# Pre-build in CI, deploy images only.
+# WHY (pinning): Mutable tags (:latest, :main) mean the same tag can resolve
+# to different images at different times. Deployments become unreproducible.
+# WHY (implicit latest): Images with no tag default to :latest silently.
+# The agent doesn't realize it's using a floating tag.
+#
+# WITHOUT IT: "It worked yesterday" failures. Same compose file deploys
+# different code depending on when you pull.
+#
+# FIX: Remove build: directives (use pre-built images). Pin own images with
+# unique tags (main-abc1234 or @sha256:...). Add pull_policy: always for
+# third-party mutable tags.
+#
+# Input: parsed docker-compose YAML
 
 import rego.v1
 
