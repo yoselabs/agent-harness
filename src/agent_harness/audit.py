@@ -37,7 +37,7 @@ def run_audit(project_dir: Path) -> list[AuditItem]:
 
     # ── Config files ──
     configs = {
-        ".harness.yml": "Run: agent-harness init",
+        ".agent-harness.yml": "Run: agent-harness init",
         ".yamllint.yml": "Run: agent-harness init",
         ".pre-commit-config.yaml": "Run: agent-harness init",
     }

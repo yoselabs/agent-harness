@@ -60,7 +60,7 @@ If ruff, ty, or yamllint aren't globally installed, agent-harness falls back to 
 
 ## Configuration
 
-Place a `.harness.yml` in your project root. If absent, stacks are auto-detected from file presence.
+Place a `.agent-harness.yml` in your project root. If absent, stacks are auto-detected from file presence.
 
 ```yaml
 stacks:

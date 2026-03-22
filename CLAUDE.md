@@ -14,7 +14,7 @@ Deterministic controls for AI agents. Detects project stacks, runs checks, initi
 
 - `cli.py` — Click CLI, delegates to modules
 - `detect.py` — Stack detection from file presence
-- `config.py` — .harness.yml parsing
+- `config.py` — .agent-harness.yml parsing
 - `runner.py` — Subprocess execution with unified output
 - `checks/` — One module per check tool
 - `policies/` — Bundled Rego policies (source of truth)

@@ -10,7 +10,7 @@ def scaffold_project(project_dir: Path) -> list[str]:
     stacks_list = ", ".join(sorted(stacks))
 
     files = {
-        ".harness.yml": HARNESS_YML.format(stacks=stacks_str, stacks_list=stacks_list),
+        ".agent-harness.yml": HARNESS_YML.format(stacks=stacks_str, stacks_list=stacks_list),
         ".yamllint.yml": YAMLLINT_YML,
         ".pre-commit-config.yaml": PRECOMMIT_YML,
     }

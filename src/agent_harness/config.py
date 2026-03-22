@@ -26,7 +26,7 @@ class HarnessConfig:
 
 def load_config(project_dir: Path) -> HarnessConfig:
     config = HarnessConfig()
-    cfg_path = project_dir / ".harness.yml"
+    cfg_path = project_dir / ".agent-harness.yml"
     if cfg_path.exists():
         raw = yaml.safe_load(cfg_path.read_text()) or {}
         if "stacks" in raw:

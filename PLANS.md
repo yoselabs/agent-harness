@@ -5,7 +5,7 @@
 - CLI commands: detect, lint, fix, init, audit
 - 32 Rego policies across Dockerfile, Compose, Python, .gitignore
 - Stack detection from file presence (Python, Docker)
-- `.harness.yml` config with auto-detection fallback
+- `.agent-harness.yml` config with auto-detection fallback
 - Tool fallback — `uv run ruff`/`ty` when not in PATH
 - JSON file validation via conftest parse
 - Tested on real project (aggre), <1s execution
