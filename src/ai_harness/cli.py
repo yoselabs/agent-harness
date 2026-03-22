@@ -69,5 +69,28 @@ def init():
 
 @cli.command()
 def audit():
-    """Audit harness configuration completeness."""
-    click.echo("audit: not implemented")
+    """Audit harness configuration — shows what's missing and how to fix it."""
+    from ai_harness.audit import run_audit
+
+    items = run_audit(Path.cwd())
+
+    ok = [i for i in items if i.status == "ok"]
+    issues = [i for i in items if i.status != "ok"]
+
+    for item in items:
+        if item.status == "ok":
+            click.echo(f"  OK    {item.message}")
+        elif item.status == "missing":
+            click.echo(f"  MISS  {item.message}")
+            if item.fix:
+                click.echo(f"        Fix: {item.fix}")
+        elif item.status == "misconfigured":
+            click.echo(f"  WARN  {item.message}")
+            if item.fix:
+                for line in item.fix.strip().splitlines():
+                    click.echo(f"        {line}")
+
+    click.echo(f"\n{len(ok)} ok, {len(issues)} issues")
+    if issues:
+        click.echo("\nRun 'ai-harness init' to fix missing config files.")
+    raise SystemExit(1 if issues else 0)
