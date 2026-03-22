@@ -8,6 +8,7 @@ from ai_harness.checks.conftest import (
 from ai_harness.checks.hadolint import run_hadolint
 from ai_harness.checks.yamllint_check import run_yamllint
 from ai_harness.checks.ruff import run_ruff
+from ai_harness.checks.ty import run_ty
 from ai_harness.checks.file_length import run_file_length
 
 
@@ -23,6 +24,7 @@ def run_lint(project_dir: Path) -> list[CheckResult]:
     # Python checks
     if "python" in config.stacks:
         results.extend(run_ruff(project_dir))  # returns list
+        results.append(run_ty(project_dir))
         results.append(run_conftest_python(project_dir))
         results.append(run_file_length(project_dir, config.python.max_file_lines))
 
