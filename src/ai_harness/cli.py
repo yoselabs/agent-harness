@@ -27,9 +27,11 @@ def print_results(results) -> int:
     for r in results:
         icon = "PASS" if r.passed else "FAIL"
         click.echo(f"  {icon}  {r.name} ({r.duration_ms}ms)")
-        if not r.passed and r.error:
-            for line in r.error.strip().splitlines():
-                click.echo(f"       {line}")
+        if not r.passed:
+            detail = r.error or r.output
+            if detail:
+                for line in detail.strip().splitlines():
+                    click.echo(f"       {line}")
 
     click.echo(f"\n{len(passed)} passed, {len(failed)} failed ({total_ms}ms)")
     return 1 if failed else 0
