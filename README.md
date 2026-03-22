@@ -114,13 +114,39 @@ When a check fails, agents should:
 
 The policies exist because agents make these specific mistakes. The WHY explains which mistake and what breaks.
 
-## Philosophy: what is a harness?
+## What is a harness?
 
-A harness is a set of deterministic controls that produce pass/fail verdicts without human judgment. Not best practices. Not guidelines. Not conventions. Tools that run the same way every time, return the same result for the same input, and tell the agent exactly what's wrong.
+A harness is a **deterministic control** that constrains AI agent behavior automatically. Linters, type checkers, formatters, coverage gates, pre-commit hooks, CI checks — tools that run the same way every time and produce the same verdict for the same input.
 
-An agent can't act on "consider using healthchecks." It can act on "FAIL: services.api missing healthcheck — add `healthcheck:` block."
+A harness is NOT:
+- Deployment conventions (healthchecks, restart policies, port bindings)
+- Documentation (README, architecture docs)
+- Agent configuration (MCP servers, .env files)
+- Infrastructure (networking, DNS, orchestration)
 
-That's the difference between documentation and a harness.
+**The test:** if a tool runs, analyzes code or config, and produces a pass/fail verdict without human judgment — it's a harness. If it requires interpretation or is a convention humans follow — it's not.
+
+**Why harnesses matter for AI agents:** Agents generate code in loops. Without deterministic controls, each loop iteration may introduce new problems or fix one thing while breaking another. Harnesses create a closed feedback loop: agent writes code → harness catches errors → agent reads errors → agent fixes. The tighter and more deterministic this loop, the more effective the agent.
+
+### Architecture
+
+The harness is layered. Each layer composes on top of the previous:
+
+```
+┌─────────────────────────────────────┐
+│  Framework (Django, FastAPI, Next.js)│  ← future
+├─────────────────────────────────────┤
+│  Stack (Python, JS/TS, Go)          │  ← stacks/python, stacks/js, ...
+├─────────────────────────────────────┤
+│  Infrastructure (Docker)            │  ← stacks/docker
+├─────────────────────────────────────┤
+│  Universal                          │  ← always applies
+└─────────────────────────────────────┘
+```
+
+**Universal** applies to every project. Stack and infrastructure modules activate based on what the project uses. Framework modules (future) add framework-specific constraints on top of their stack.
+
+An agent can't act on "consider using healthchecks." It can act on "FAIL: services.api missing healthcheck — add `healthcheck:` block." That's the difference between documentation and a harness.
 
 ## Status
 
