@@ -18,12 +18,8 @@ def detect():
     else:
         click.echo("no stacks detected")
 
-@cli.command()
-def lint():
-    """Run all harness checks."""
-    from ai_harness.lint import run_lint
-    results = run_lint(Path.cwd())
-
+def print_results(results) -> int:
+    """Print lint results and return exit code."""
     failed = [r for r in results if not r.passed]
     passed = [r for r in results if r.passed]
     total_ms = sum(r.duration_ms for r in results)
@@ -36,17 +32,38 @@ def lint():
                 click.echo(f"       {line}")
 
     click.echo(f"\n{len(passed)} passed, {len(failed)} failed ({total_ms}ms)")
-    raise SystemExit(1 if failed else 0)
+    return 1 if failed else 0
+
+@cli.command()
+def lint():
+    """Run all harness checks."""
+    from ai_harness.lint import run_lint
+    results = run_lint(Path.cwd())
+    raise SystemExit(print_results(results))
 
 @cli.command()
 def fix():
     """Auto-fix what's fixable, then lint."""
-    click.echo("fix: not implemented")
+    from ai_harness.fix import run_fix
+    from ai_harness.lint import run_lint
+
+    click.echo("Fixing...")
+    actions = run_fix(Path.cwd())
+    for a in actions:
+        click.echo(f"  {a}")
+
+    click.echo("\nLinting...")
+    results = run_lint(Path.cwd())
+    raise SystemExit(print_results(results))
 
 @cli.command()
 def init():
     """Initialize harness on a project."""
-    click.echo("init: not implemented")
+    from ai_harness.init.scaffold import scaffold_project
+    actions = scaffold_project(Path.cwd())
+    for action in actions:
+        click.echo(f"  {action}")
+    click.echo("\nHarness initialized. Run 'ai-harness lint' to check.")
 
 @cli.command()
 def audit():
