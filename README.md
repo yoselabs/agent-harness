@@ -55,10 +55,10 @@ An agent can't act on *"consider using healthchecks."* It can act on *"FAIL: ser
 # Install
 uv tool install agent-harness   # or: pip install agent-harness
 
-# See what's missing
-agent-harness audit
+# Detect stacks + subprojects
+agent-harness detect
 
-# Set up configs
+# Set up configs and Makefile
 agent-harness init
 
 # Run all checks

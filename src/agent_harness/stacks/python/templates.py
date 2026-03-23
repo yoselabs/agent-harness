@@ -1,6 +1,6 @@
 """Python stack config templates — reference configs for agent-harness init.
 
-These templates are extracted from the ai-harness K skill (python.md).
+Config templates for Python stack.
 They are NOT used by `init` yet — stored here for a future enhancement
 that will generate pyproject.toml sections, CI workflows, and Dockerfiles.
 """

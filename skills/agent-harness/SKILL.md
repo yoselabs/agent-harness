@@ -1,76 +1,36 @@
 ---
 name: agent-harness
-description: "Harness engineering for AI agents. Use when setting up a new project, auditing harness coverage, or when agent output is too noisy. Triggers: 'harness audit', 'check harness', 'apply harness', new project setup, first commit on a new repo."
+description: "Deterministic quality gates for AI agents. Use when setting up a project, when lint fails, or when agent output is noisy. Triggers: 'set up harness', 'check harness', new project, first commit."
 ---
 
 # Agent Harness
 
-Deterministic controls (linters, type checkers, formatters, coverage gates) that constrain AI agent behavior. Run `agent-harness lint` constantly — it's your feedback loop.
+Deterministic controls (linters, type checkers, formatters, coverage gates) that constrain AI agent behavior automatically.
 
-## Quick Start
-
-```bash
-# Install (one-time)
-uv tool install agent-harness
-
-# On any project:
-agent-harness audit    # what's missing?
-agent-harness init     # scaffold configs
-agent-harness lint     # run all checks (<1s)
-agent-harness fix      # auto-fix, then lint
-```
+Run `agent-harness --help` for available commands and flags.
 
 ## When to Use
 
-- Setting up a new project for AI-assisted development
-- Auditing an existing project's harness coverage
-- Agent output is too noisy, errors aren't actionable, or the fix-verify loop is manual
-- User says "harness audit", "check harness", "apply harness"
+- Setting up a new project — run `agent-harness init`
+- Lint failures or noisy agent output — run `agent-harness lint`
+- Monorepo with multiple subprojects — run `agent-harness lint --all`
+- User says "set up harness", "check harness", "apply harness"
 
 ## When NOT to Use
 
 - Business logic, architecture, or domain modeling
 - Deployment operations (use deployment-platform skill)
-- General style questions (just answer directly)
 - Fixing one specific tool config (help directly)
 
-## Stacks
+## How It Works
 
-Agent-harness detects and enforces per stack:
+Agent-harness auto-detects project stacks (Python, JavaScript, Docker, Dokploy) and runs the right checks. Every error message is actionable — read it, fix it, re-lint.
 
-| Stack | Detected by | Tools | Key rules |
-|-------|------------|-------|-----------|
-| **Python** | `pyproject.toml`, `setup.py` | ruff, ty, conftest | Strict markers, coverage >=90%, verbose output, line length |
-| **JavaScript** | `package.json`, `tsconfig.json` | Biome, framework type checker | engines field, type:module, no wildcard versions |
-| **Docker** | `Dockerfile`, `docker-compose*.yml` | hadolint, conftest | Layer ordering, cache mounts, USER, healthchecks, no bind mounts |
-| **Dokploy** | `dokploy-network` in compose | conftest | traefik.enable required, dokploy-network for routed services |
-| **Universal** | Always | yamllint, conftest | .gitignore entries (stack-aware), JSON validation, file length |
-
-## Agent Workflow
-
-1. **On lint failure:** `agent-harness lint` reports which rules failed with actionable messages.
-2. **Fix automatically** — most failures have clear fixes. Run `agent-harness fix` for auto-fixable issues.
-3. **If the user challenges a rule:** read the WHY block from the `.rego` policy file and explain it before suppressing.
-4. **If the user still wants to suppress:** that's their call, but inform them of the risk.
+When a user challenges a rule, read the WHY block from the Rego policy file in the repo. It explains why agents need that specific check.
 
 ## Guidance
 
-When writing Docker, compose, or Python code — read the guidance files in this skill directory for recipes and patterns that help write correct code the first time:
+Read these files when writing new Docker or Python code:
 
-- **`docker-guidance.md`** — healthcheck recipes (PostgreSQL, Redis, MySQL, HTTP, auth-protected, Alpine, distroless), dependency chains, migration patterns, config file strategy, base image selection
+- **`docker-guidance.md`** — healthcheck recipes, dependency chains, migration patterns, config file strategy, base image selection
 - **`python-guidance.md`** — why each pyproject.toml knob matters
-
-These are non-deterministic best practices. They can't be linted but prevent common mistakes.
-
-## Policy WHY Blocks
-
-Every Rego policy file contains a structured comment:
-
-```
-# WHAT: What this rule checks
-# WHY: Why it matters for AI agents
-# WITHOUT IT: What breaks in practice
-# FIX: How to resolve the violation
-```
-
-When a user asks "why does this rule exist?" — read the policy file's WHY block. It's the agent's argument.

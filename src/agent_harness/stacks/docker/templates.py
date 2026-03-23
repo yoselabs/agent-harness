@@ -1,6 +1,6 @@
 """Docker stack config templates — reference configs for agent-harness init.
 
-These templates are extracted from the ai-harness K skill (docker.md).
+Config templates for Docker stack.
 They are NOT used by `init` yet — stored here for a future enhancement
 that will generate .dockerignore files and provide Docker guidance.
 """

@@ -8,7 +8,6 @@ Deterministic quality gates for AI-assisted development. This project IS a harne
 make lint          # agent-harness lint (runs all checks)
 make fix           # agent-harness fix (auto-fix, then lint)
 make test          # pytest + conftest verify (all tests)
-make audit         # agent-harness audit (gap analysis)
 ```
 
 Install dev deps: `uv sync`
@@ -25,23 +24,23 @@ agent-harness lint             # verify everything passes
 
 ```
 src/agent_harness/
-  cli.py              — Click CLI entry point
+  cli.py               — Click CLI: detect, init, lint, fix
   config.py            — .agent-harness.yml parsing, HarnessConfig dataclass
-  detect.py            — Stack detection orchestrator
-  runner.py            — Subprocess execution, CheckResult dataclass
+  detect.py            — Stack detection orchestrator (scans subdirs too)
+  runner.py            — Subprocess execution, CheckResult, tool_available()
   exclusions.py        — File exclusion patterns (lock files, build output)
-  lint.py              — Check pipeline (universal → per-stack)
-  fix.py               — Auto-fix (ruff, biome)
-  audit.py             — Gap analysis
-  init/                — Scaffolding (config files, templates)
+  workspace.py         — Discover subproject roots (.agent-harness.yml scanning)
+  lint.py              — Check pipeline (universal → per-stack), lint_all for monorepos
+  fix.py               — Auto-fix (ruff, biome), fix_all for monorepos
+  init/                — Scaffolding (configs, Makefile, templates)
   stacks/
     universal/         — Always runs: yamllint, gitignore, JSON, file length
     python/            — ruff, ty, conftest on pyproject.toml
     javascript/        — Biome, framework type checker, conftest on package.json
     docker/            — hadolint, conftest on Dockerfile + compose
     dokploy/           — conftest for Traefik/Dokploy conventions
+  policies/            — Rego policies (bundled in package). Each has WHAT/WHY/FIX.
 
-policies/              — Rego policies (conftest). Each has WHAT/WHY/FIX comments.
 skills/agent-harness/  — Claude Code plugin (SKILL.md + guidance docs)
 ```
 

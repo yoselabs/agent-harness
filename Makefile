@@ -1,4 +1,4 @@
-.PHONY: lint fix test audit
+.PHONY: lint fix test
 
 lint:
 	agent-harness lint
@@ -8,7 +8,4 @@ fix:
 
 test:
 	uv run pytest tests/ -v
-	conftest verify -p policies/ --no-color
-
-audit:
-	agent-harness audit
+	conftest verify -p src/agent_harness/policies/ --no-color

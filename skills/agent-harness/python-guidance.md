@@ -2,7 +2,7 @@
 
 Non-deterministic guidance for Python stack — reasoning behind config choices that can't be expressed as Rego policies.
 
-Deterministic configs (ruff, ty, pytest, coverage, CI workflow, Dockerfile template) live in `src/agent_harness/stacks/python/templates.py`. Use `agent-harness audit` and `agent-harness init` for config generation and gap analysis.
+Deterministic configs (ruff, ty, pytest, coverage, CI workflow, Dockerfile template) live in `src/agent_harness/stacks/python/templates.py`. Use `agent-harness init` for config scaffolding.
 
 ---
 

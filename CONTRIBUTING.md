@@ -22,10 +22,10 @@ The harness only contains deterministic controls — tools that produce a pass/f
 
 ### 2. Choose the right directory
 
-- `policies/dockerfile/` — Dockerfile rules
-- `policies/compose/` — Docker Compose rules
-- `policies/python/` — pyproject.toml / Python config rules
-- `policies/gitignore/` — .gitignore rules
+- `src/agent_harness/policies/dockerfile/` — Dockerfile rules
+- `src/agent_harness/policies/compose/` — Docker Compose rules
+- `src/agent_harness/policies/python/` — pyproject.toml / Python config rules
+- `src/agent_harness/policies/gitignore/` — .gitignore rules
 
 ### 3. Write the .rego file
 
@@ -49,7 +49,7 @@ deny contains msg if {
 
 **Conventions:**
 - One file per concern (e.g., `layers.rego`, `cache.rego`, not `all_dockerfile_rules.rego`)
-- Package name matches directory + filename: `policies/dockerfile/layers.rego` -> `package dockerfile.layers`
+- Package name matches directory + filename: `src/agent_harness/policies/dockerfile/layers.rego` -> `package dockerfile.layers`
 - Use `deny` for errors, `warn` for recommendations
 - Error messages must be actionable — tell the agent what to do, not just what's wrong
 - Comment at the top: what it checks, why, and the input structure
@@ -70,15 +70,15 @@ Place in `tests/fixtures/<directory>/` (e.g., `tests/fixtures/dockerfile/`).
 
 ```bash
 # Run all Dockerfile fixture tests
-conftest test tests/fixtures/dockerfile/*.Dockerfile --parser dockerfile -p policies/dockerfile/ --all-namespaces
+conftest test tests/fixtures/dockerfile/*.Dockerfile --parser dockerfile -p src/agent_harness/policies/dockerfile/ --all-namespaces
 
 # Run all Compose fixture tests
-conftest test tests/fixtures/compose/*.yml -p policies/compose/ --all-namespaces
+conftest test tests/fixtures/compose/*.yml -p src/agent_harness/policies/compose/ --all-namespaces
 
 # Python/TOML example
 conftest test tests/fixtures/python/bad_pyproject.toml \
   --parser toml \
-  -p policies/python/ \
+  -p src/agent_harness/policies/python/ \
   --all-namespaces
 ```
 
@@ -94,13 +94,13 @@ Update the rule count if you added new deny rules.
 
 ## Adding a new check module
 
-Create a new file in `src/ai_harness/checks/`. Follow the existing pattern:
+Create a new file in `src/agent_harness/stacks/<stack>/`. Follow the existing pattern:
 
 - Function takes `project_dir: Path` and returns `CheckResult`
-- Use `run_check()` from `ai_harness.runner` for subprocess execution
-- Add the call to `run_lint()` in `src/ai_harness/lint.py`
+- Use `run_check()` from `agent_harness.runner` for subprocess execution
+- Add the call to `run_lint()` in `src/agent_harness/lint.py`
 
-Look at `src/ai_harness/checks/hadolint.py` or `src/ai_harness/checks/ruff.py` for reference.
+Look at `src/agent_harness/stacks/python/ruff_check.py` or `src/agent_harness/stacks/docker/hadolint_check.py` for reference.
 
 ## Evaluating community rules
 

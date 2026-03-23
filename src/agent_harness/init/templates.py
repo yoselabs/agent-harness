@@ -37,8 +37,8 @@ repos:
   - repo: local
     hooks:
       - id: harness-lint
-        name: ai-harness lint
-        entry: ai-harness lint
+        name: agent-harness lint
+        entry: agent-harness lint
         language: system
         pass_filenames: false
         always_run: true
