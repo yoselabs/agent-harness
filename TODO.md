@@ -25,6 +25,8 @@ Open questions and unchallenged assumptions from the initial build session.
 
 ## Rules to investigate
 
+- **Makefile `make lint` target.** Audit should verify a Makefile exists with a `lint` target (or equivalent). This is the standard entry point — agent-harness init should scaffold it, audit should flag when missing.
 - **GitHub Actions workflow policies.** Pinned action SHAs, permissions block, make targets in CI.
 - **`.pre-commit-config.yaml` policies.** Local-only hooks, fix-before-lint order.
 - **check-jsonschema integration.** Compose schema + GitHub Actions schema validation via built-in schemas.
+- **Migration-as-entrypoint detection.** Compose services with `restart:` + migration-like commands (alembic, prisma migrate, knex migrate) should be one-shot (`service_completed_successfully`), not long-running.
