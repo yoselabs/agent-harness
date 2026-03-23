@@ -102,7 +102,7 @@ Priority — first option that fits wins:
 
 2. **envsubst template baked into the image** — for images you own. Bake a template with `${VAR}` placeholders, resolve at startup via entrypoint script. Config structure is version-controlled, values come from env. The Nginx official image uses this pattern.
 
-3. **`command: sh -c 'cat > /path ...'`** — for third-party images you can't modify. Ugly but reliable — config regenerates on every container start.
+3. **`command: sh -c 'cat > /path ...'`** — for third-party images with a shell. Config regenerates on every container start. **Does NOT work on distroless images** (no `sh`).
 
 ```yaml
 # Pattern 3 example:
@@ -118,6 +118,36 @@ services:
       CONF
       exec myapp serve'
 ```
+
+4. **Init container + shared volume** — for distroless images with no shell. A lightweight init container (busybox) writes config to a named volume, the app mounts it read-only. Check if the app supports env vars for secrets first — many do, even when they require a config file for structure.
+
+```yaml
+# Pattern 4 example (distroless):
+services:
+  myapp-init:
+    image: busybox:1.37
+    command: >
+      sh -c 'cat > /config/app.toml <<CONF
+      [server]
+      port = 8080
+      [database]
+      host = "db"
+      CONF'
+    volumes: [config-data:/config]
+
+  myapp:
+    image: distroless/app:1.0
+    depends_on:
+      myapp-init: { condition: service_completed_successfully }
+    environment:
+      APP_DB_PASSWORD: ${DB_PASSWORD}   # secrets via env vars if supported
+    volumes: [config-data:/config:ro]
+
+volumes:
+  config-data:
+```
+
+**Step 0 before any config injection:** check `--help` or docs for env var support. Many apps accept `APP_SECRET_KEY` or similar — eliminates the need for config file templating entirely.
 
 ---
 
