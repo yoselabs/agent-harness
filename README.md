@@ -1,96 +1,176 @@
-# Agent Harness — harness engineering for AI agents
+<p align="center">
+  <h1 align="center">Agent Harness</h1>
+  <p align="center">
+    <strong>Deterministic quality gates for AI-assisted development</strong>
+  </p>
+  <p align="center">
+    36 rules &middot; 5 stacks &middot; <500ms &middot; Zero config
+  </p>
+  <p align="center">
+    <a href="#quick-start">Quick Start</a> &middot;
+    <a href="#stacks">Stacks</a> &middot;
+    <a href="#for-ai-agents">For AI Agents</a> &middot;
+    <a href="#contributing">Contributing</a>
+  </p>
+</p>
 
-Single CLI that detects project stacks, runs all quality checks, audits harness completeness, and initializes new projects. Your Makefile delegates to it — `make lint` calls `agent-harness lint`.
+---
 
-## The problem
+AI agents generate code in loops. Each iteration can introduce misconfigurations, missing healthchecks, bad Dockerfile layering, or secrets in git — and the agent won't know unless something tells it.
 
-AI agents generate code in loops. Without deterministic controls, each loop can introduce new problems — misconfigurations, missing healthchecks, bad Dockerfile layering, secrets in git. The agent doesn't know it broke something unless something tells it.
+**Agent Harness is that something.** One CLI that detects your project stack, runs all quality checks, and gives agents actionable error messages they can fix without human intervention.
 
-Agents need tight feedback loops: write code, harness catches errors, agent reads errors, agent fixes. The tighter and more deterministic the feedback, the more effective the agent. That's what this tool provides.
+```
+$ agent-harness lint
 
-## Quick start
+  PASS  conftest-gitignore (39ms)
+  PASS  conftest-json (0ms)
+  PASS  yamllint (117ms)
+  PASS  file-length (0ms)
+  PASS  ruff:format (50ms)
+  PASS  ruff:check (118ms)
+  PASS  ty (109ms)
+  PASS  conftest-python (43ms)
+
+8 passed, 0 failed (476ms)
+```
+
+## Why
+
+Agents need tight feedback loops. The tighter and more deterministic the feedback, the more effective the agent.
+
+| Without harness | With harness |
+|---|---|
+| Agent commits `.env` with real secrets | `.gitignore` policy catches it before commit |
+| Dockerfile rebuilds all deps every push | Layer ordering policy enforces correct `COPY` order |
+| `pytest.mark.untit` silently selects nothing | Strict markers policy catches the typo |
+| Compose healthcheck missing, deploy "succeeds" | Healthcheck policy fails the lint |
+| Agent reformats code differently each iteration | Formatter runs on every check, enforcing consistency |
+
+An agent can't act on *"consider using healthchecks."* It can act on *"FAIL: services.api missing healthcheck — add `healthcheck:` block."* That's the difference between documentation and a harness.
+
+## Quick Start
 
 ```bash
 # Install
-uv tool install agent-harness  # or: pip install agent-harness
+uv tool install agent-harness   # or: pip install agent-harness
 
-# Audit your project
+# See what's missing
 agent-harness audit
 
-# Initialize harness
+# Set up configs
 agent-harness init
 
-# Run all checks (<1s)
+# Run all checks
 agent-harness lint
 
-# Auto-fix then lint
+# Auto-fix what's fixable, then lint
 agent-harness fix
 ```
 
-## What's inside
+## Stacks
 
-36 Rego policies across 5 categories, plus external tool orchestration.
+Agent Harness auto-detects your project and activates the right checks. Zero config required.
 
-**Dockerfile** (7 rules) — layer ordering, cache mount usage, Alpine/musl detection, USER directive, HEALTHCHECK, secrets in ENV/ARG, base image pinning.
+### Python
 
-**Docker Compose** (12 rules) — build directives in prod, image pinning, implicit `:latest`, healthchecks on long-running services, restart policies, port binding, `$$` escaping, hostname configuration, bind mount volumes, inline config content.
+Detected by `pyproject.toml`, `setup.py`, `requirements.txt`
 
-**Dokploy** (2 rules) — Traefik `traefik.enable=true` required when routing labels present, `dokploy-network` attachment required for Traefik-routed services.
+| Tool | What it checks |
+|------|---------------|
+| **ruff** | Linting + formatting (fastest Python linter) |
+| **ty** | Type checking |
+| **conftest** | pytest strict-markers, coverage >=90%, verbose output, ruff config |
+| **file-length** | No file exceeds 500 lines |
 
-**Python / pyproject.toml** (14 rules) — ruff output-format and line-length, coverage thresholds, pytest configuration, test isolation (no hardcoded paths, no `sleep` in tests).
+### JavaScript / TypeScript
 
-**.gitignore** (1 rule) — secrets and artifacts (`.env`, `.venv`, `__pycache__`).
+Detected by `package.json`, `tsconfig.json`
 
-## Tool stack
+| Tool | What it checks |
+|------|---------------|
+| **Biome** | Linting + formatting (single Rust-based tool, ~20x faster than ESLint) |
+| **Framework type checker** | `astro check`, `next lint`, or `tsc --noEmit` — auto-detected |
+| **conftest** | `engines` field, `type: "module"`, no wildcard `*` versions |
 
-Agent Harness orchestrates external tools — it doesn't embed them:
+### Docker
 
-- **conftest** — runs the bundled Rego policies against project files
-- **hadolint** — Dockerfile linting (DL/SC rules)
-- **yamllint** — YAML syntax and style
-- **ruff** — Python linting and formatting
-- **ty** — Python type checking
+Detected by `Dockerfile`, `docker-compose*.yml`
 
-If ruff, ty, or yamllint aren't globally installed, agent-harness falls back to `uv run` to invoke them.
+| Tool | What it checks |
+|------|---------------|
+| **hadolint** | Dockerfile best practices (DL/SC rules) |
+| **conftest** | Layer ordering, cache mounts, USER directive, HEALTHCHECK, secrets in ENV/ARG, base image pinning |
+| **conftest** (compose) | Healthchecks, restart policies, image pinning, port binding, `$$` escaping, no bind mounts, no inline configs |
 
-## Requirements
+### Dokploy
 
-- Python 3.12+
-- conftest (required)
-- hadolint (required for Docker projects)
-- ruff, ty, yamllint — used via `uv run` fallback if not globally installed
+Detected by `dokploy-network` reference in compose files
+
+| Tool | What it checks |
+|------|---------------|
+| **conftest** | `traefik.enable=true` on labeled services, `dokploy-network` for routed services |
+
+### Universal
+
+Always active on every project.
+
+| Tool | What it checks |
+|------|---------------|
+| **yamllint** | YAML syntax, duplicate keys, truthy values |
+| **conftest** | `.gitignore` completeness (stack-aware), JSON validity |
+| **file-length** | Extension-aware: `.py`/`.ts` 500 lines, `.astro`/`.vue` 800 lines |
 
 ## Configuration
 
-Place a `.agent-harness.yml` in your project root. If absent, stacks are auto-detected from file presence.
+Zero config by default — stacks are auto-detected. Override with `.agent-harness.yml`:
 
 ```yaml
 stacks:
   - python
   - docker
+  - javascript
+
+exclude:
+  - _archive/
+  - vendor/
 
 python:
   coverage_threshold: 95
   line_length: 140
   max_file_lines: 500
 
+javascript:
+  coverage_threshold: 80
+
 docker:
-  own_image_prefix: "myorg/"
+  own_image_prefix: "ghcr.io/myorg/"
 ```
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `detect` | Detect project stacks (Python, Docker, etc.) |
-| `lint` | Run all harness checks — exits non-zero on failure |
-| `fix` | Auto-fix what's fixable (ruff format/fix), then lint |
-| `init` | Scaffold harness config files onto a project |
-| `audit` | Audit harness completeness — shows what's missing and how to fix it |
+| `agent-harness detect` | Show detected stacks |
+| `agent-harness lint` | Run all checks — exits non-zero on failure |
+| `agent-harness fix` | Auto-fix (ruff, biome), then lint |
+| `agent-harness init` | Scaffold `.agent-harness.yml`, `.yamllint.yml`, pre-commit config |
+| `agent-harness audit` | Gap analysis — what's missing, how to fix it |
 
-## For AI agents: how to use this
+## For AI Agents
 
-Every Rego policy file contains a structured comment block:
+### The feedback loop
+
+```
+Agent writes code
+       ↓
+agent-harness lint
+       ↓
+  ┌─ PASS → commit
+  └─ FAIL → agent reads error → agent fixes → re-lint
+```
+
+Every error message is actionable. Every Rego policy has a structured comment:
 
 ```
 # WHAT: What this rule checks
@@ -99,65 +179,85 @@ Every Rego policy file contains a structured comment block:
 # FIX: How to resolve the violation
 ```
 
-### The agent workflow
+### When a user challenges a rule
 
-1. **On lint failure:** `agent-harness lint` reports which rules failed with actionable messages.
-2. **Agent fixes automatically** — most failures have clear fixes (add USER, add healthcheck, set output-format).
-3. **If the user challenges a rule** ("ignore that, it doesn't apply"): read the WHY block from the `.rego` file and explain it to the user before suppressing. The WHY is the agent's argument.
-4. **If the user still wants to suppress:** that's their call, but the agent informed them of the risk.
+1. Read the WHY block from the `.rego` file
+2. Explain the risk to the user
+3. If they still want to suppress — that's their call
 
-### Never ignore silently
+The WHY exists because agents make these specific mistakes. It's the agent's argument.
 
-When a check fails, agents should:
-- Read the error message (it's actionable — "add healthcheck", "set output-format to concise")
-- Fix it
-- If unsure, read the `.rego` file's WHY block for context
-- If the user says "skip it," cite the WHY and WITHOUT IT before proceeding
+### Claude Code plugin
 
-The policies exist because agents make these specific mistakes. The WHY explains which mistake and what breaks.
+Agent Harness ships as a Claude Code plugin with guidance docs:
 
-## What is a harness?
+```bash
+# Load as plugin
+claude --plugin-dir /path/to/agent-harness
 
-A harness is a **deterministic control** that constrains AI agent behavior automatically. Linters, type checkers, formatters, coverage gates, pre-commit hooks, CI checks — tools that run the same way every time and produce the same verdict for the same input.
+# Or add to your shell alias
+alias c="claude --plugin-dir ~/path/to/agent-harness"
+```
 
-A harness is NOT:
-- Deployment conventions (healthchecks, restart policies, port bindings)
-- Documentation (README, architecture docs)
-- Agent configuration (MCP servers, .env files)
-- Infrastructure (networking, DNS, orchestration)
+The plugin includes:
+- **Skill** — when to use, workflow, stack reference
+- **Docker guidance** — healthcheck recipes, migration patterns, config strategies
+- **Python guidance** — why each pyproject.toml knob matters
 
-**The test:** if a tool runs, analyzes code or config, and produces a pass/fail verdict without human judgment — it's a harness. If it requires interpretation or is a convention humans follow — it's not.
-
-**Why harnesses matter for AI agents:** Agents generate code in loops. Without deterministic controls, each loop iteration may introduce new problems or fix one thing while breaking another. Harnesses create a closed feedback loop: agent writes code → harness catches errors → agent reads errors → agent fixes. The tighter and more deterministic this loop, the more effective the agent.
-
-### Architecture
-
-The harness is layered. Each layer composes on top of the previous:
+## Architecture
 
 ```
 ┌─────────────────────────────────────┐
 │  Framework (Django, FastAPI, Next.js)│  ← future
 ├─────────────────────────────────────┤
-│  Stack (Python, JS/TS, Go)          │  ← stacks/python, stacks/js, ...
+│  Stack (Python, JS/TS, Go)          │
 ├─────────────────────────────────────┤
-│  Infrastructure (Docker)            │  ← stacks/docker
+│  Infrastructure (Docker, Dokploy)   │
 ├─────────────────────────────────────┤
-│  Universal                          │  ← always applies
+│  Universal                          │  ← always active
 └─────────────────────────────────────┘
 ```
 
-**Universal** applies to every project. Stack and infrastructure modules activate based on what the project uses. Framework modules (future) add framework-specific constraints on top of their stack.
+Each layer composes on top of the previous. Adding a new stack = creating a new directory. Each check is a self-contained file with its own docstring, test, and single responsibility.
 
-An agent can't act on "consider using healthchecks." It can act on "FAIL: services.api missing healthcheck — add `healthcheck:` block." That's the difference between documentation and a harness.
+## Tool Stack
+
+Agent Harness orchestrates external tools — it doesn't embed them:
+
+| Tool | Purpose | Fallback |
+|------|---------|----------|
+| [conftest](https://www.conftest.dev/) | Rego policy engine | Required |
+| [hadolint](https://github.com/hadolint/hadolint) | Dockerfile linting | Required for Docker |
+| [ruff](https://docs.astral.sh/ruff/) | Python linting + formatting | `uv run` fallback |
+| [ty](https://docs.astral.sh/ty/) | Python type checking | `uv run` fallback |
+| [Biome](https://biomejs.dev/) | JS/TS linting + formatting | `npx` fallback |
+| [yamllint](https://github.com/adrienverge/yamllint) | YAML validation | `uv run` fallback |
+
+## Requirements
+
+- Python 3.12+
+- [conftest](https://www.conftest.dev/install/) (required)
+- [hadolint](https://github.com/hadolint/hadolint#install) (for Docker projects)
+- Other tools auto-fallback via `uv run` or `npx`
 
 ## Status
 
-MVP (v0.1) — actively developed. See [PLANS.md](PLANS.md) for roadmap.
+Actively developed. See [PLANS.md](PLANS.md) for roadmap.
+
+**Current:** 36 Rego policies, 5 stacks (Python, JavaScript, Docker, Dokploy, Universal), 69 Python tests, 87 Rego tests.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Every Rego policy follows the WHAT/WHY/WITHOUT IT/FIX pattern. Every Python check has a self-documenting docstring. Adding a rule? Write the WHY first — if you can't articulate why an AI agent needs this specific check, it doesn't belong here.
 
 ## License
 
 MIT — see [LICENSE](LICENSE).
 
-## Contributing
+---
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+<p align="center">
+  <sub>Built by <a href="https://github.com/agentic-eng">Agentic Engineering</a></sub>
+</p>
