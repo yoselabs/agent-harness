@@ -72,14 +72,16 @@ def fix():
 
 
 @cli.command()
-def init():
-    """Initialize harness on a project."""
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompt")
+def init(yes):
+    """Scaffold configs and Makefile for detected stacks."""
     from agent_harness.init.scaffold import scaffold_project
 
-    actions = scaffold_project(Path.cwd())
+    actions = scaffold_project(Path.cwd(), yes=yes)
     for action in actions:
         click.echo(f"  {action}")
-    click.echo("\nHarness initialized. Run 'agent-harness lint' to check.")
+    if actions and actions[0] != "Cancelled":
+        click.echo("\n  Harness initialized. Run: make lint")
 
 
 @cli.command()
