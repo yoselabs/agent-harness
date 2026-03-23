@@ -1,9 +1,11 @@
 from __future__ import annotations
-from pathlib import Path
-from dataclasses import dataclass
+
 import shutil
-from agent_harness.detect import detect_stacks
+from dataclasses import dataclass
+from pathlib import Path
+
 from agent_harness.config import load_config
+from agent_harness.detect import detect_stacks
 
 
 @dataclass
@@ -12,6 +14,22 @@ class AuditItem:
     status: str  # "ok", "missing", "misconfigured"
     message: str
     fix: str = ""  # How to fix it
+
+
+def _tool_available(tool: str, project_dir: Path) -> bool:
+    """Check if a tool is available — globally, in .venv, or in node_modules."""
+    # Global PATH
+    if shutil.which(tool):
+        return True
+    # Python venv (uv add --dev / pip install)
+    venv_bin = project_dir / ".venv" / "bin" / tool
+    if venv_bin.exists():
+        return True
+    # Node modules (npm install --save-dev)
+    node_bin = project_dir / "node_modules" / ".bin" / tool
+    if node_bin.exists():
+        return True
+    return False
 
 
 def run_audit(project_dir: Path) -> list[AuditItem]:
@@ -32,7 +50,7 @@ def run_audit(project_dir: Path) -> list[AuditItem]:
         tools["biome"] = "npm install --save-dev @biomejs/biome"
 
     for tool, install_cmd in tools.items():
-        if shutil.which(tool):
+        if _tool_available(tool, project_dir):
             items.append(
                 AuditItem(area="tools", status="ok", message=f"{tool} installed")
             )
