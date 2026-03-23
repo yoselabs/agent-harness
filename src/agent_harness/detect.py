@@ -31,7 +31,11 @@ def _detect_recursive(
     except PermissionError:
         return
     for child in children:
-        if child.is_dir() and child.name not in SKIP_DIRS and not child.name.startswith("."):
+        if (
+            child.is_dir()
+            and child.name not in SKIP_DIRS
+            and not child.name.startswith(".")
+        ):
             _detect_recursive(root, child, results, depth + 1, max_depth)
 
 

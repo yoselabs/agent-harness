@@ -47,7 +47,9 @@ def print_results(results) -> int:
 
 
 @cli.command()
-@click.option("--all", "run_all", is_flag=True, help="Lint all subprojects (monorepo mode)")
+@click.option(
+    "--all", "run_all", is_flag=True, help="Lint all subprojects (monorepo mode)"
+)
 def lint(run_all):
     """Run all harness checks."""
     if run_all:
@@ -71,19 +73,46 @@ def lint(run_all):
 
 
 @cli.command()
-def fix():
+@click.option(
+    "--all", "run_all", is_flag=True, help="Fix all subprojects (monorepo mode)"
+)
+def fix(run_all):
     """Auto-fix what's fixable, then lint."""
-    from agent_harness.fix import run_fix
-    from agent_harness.lint import run_lint
+    if run_all:
+        from agent_harness.fix import run_fix_all
+        from agent_harness.lint import run_lint_all
 
-    click.echo("Fixing...")
-    actions = run_fix(Path.cwd())
-    for a in actions:
-        click.echo(f"  {a}")
+        cwd = Path.cwd()
 
-    click.echo("\nLinting...")
-    results = run_lint(Path.cwd())
-    raise SystemExit(print_results(results))
+        click.echo("Fixing...")
+        fix_results = run_fix_all(cwd)
+        for path, actions in sorted(fix_results.items()):
+            rel = "." if path == cwd else str(path.relative_to(cwd))
+            for a in actions:
+                click.echo(f"  {rel}: {a}")
+
+        click.echo("\nLinting...")
+        lint_results = run_lint_all(cwd)
+        total_exit = 0
+        for path, results in sorted(lint_results.items()):
+            rel = "." if path == cwd else str(path.relative_to(cwd))
+            click.echo(f"\n=== {rel} ===")
+            exit_code = print_results(results)
+            if exit_code:
+                total_exit = 1
+        raise SystemExit(total_exit)
+    else:
+        from agent_harness.fix import run_fix
+        from agent_harness.lint import run_lint
+
+        click.echo("Fixing...")
+        actions = run_fix(Path.cwd())
+        for a in actions:
+            click.echo(f"  {a}")
+
+        click.echo("\nLinting...")
+        results = run_lint(Path.cwd())
+        raise SystemExit(print_results(results))
 
 
 @cli.command()
@@ -97,32 +126,3 @@ def init(yes):
         click.echo(f"  {action}")
     if actions and actions[0] != "Cancelled":
         click.echo("\n  Harness initialized. Run: make lint")
-
-
-@cli.command()
-def audit():
-    """Audit harness configuration — shows what's missing and how to fix it."""
-    from agent_harness.audit import run_audit
-
-    items = run_audit(Path.cwd())
-
-    ok = [i for i in items if i.status == "ok"]
-    issues = [i for i in items if i.status != "ok"]
-
-    for item in items:
-        if item.status == "ok":
-            click.echo(f"  OK    {item.message}")
-        elif item.status == "missing":
-            click.echo(f"  MISS  {item.message}")
-            if item.fix:
-                click.echo(f"        Fix: {item.fix}")
-        elif item.status == "misconfigured":
-            click.echo(f"  WARN  {item.message}")
-            if item.fix:
-                for line in item.fix.strip().splitlines():
-                    click.echo(f"        {line}")
-
-    click.echo(f"\n{len(ok)} ok, {len(issues)} issues")
-    if issues:
-        click.echo("\nRun 'agent-harness init' to fix missing config files.")
-    raise SystemExit(1 if issues else 0)

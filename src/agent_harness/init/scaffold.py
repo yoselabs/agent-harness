@@ -2,7 +2,13 @@ import click
 from pathlib import Path
 
 from agent_harness.detect import detect_stacks
-from agent_harness.init.templates import HARNESS_YML, YAMLLINT_YML, PRECOMMIT_YML, MAKEFILE
+from agent_harness.init.templates import (
+    HARNESS_YML,
+    YAMLLINT_YML,
+    PRECOMMIT_YML,
+    MAKEFILE,
+)
+from agent_harness.runner import tool_available
 from agent_harness.stacks.javascript.templates import BIOME_CONFIG
 
 STACK_DESCRIPTIONS = {
@@ -36,11 +42,29 @@ def scaffold_project(project_dir: Path, yes: bool = False) -> list[str]:
     # Show what was detected
     click.echo(f"  Detected stacks: {stacks_str}")
     click.echo()
+    INSTALL_HINTS = {
+        "ruff": "uv add ruff --dev",
+        "ty": "uv add ty --dev",
+        "conftest": "brew install conftest",
+        "hadolint": "brew install hadolint",
+        "yamllint": "pip install yamllint",
+        "Biome": "npm install --save-dev @biomejs/biome",
+    }
+
     for stack in sorted(stacks):
         if stack in STACK_DESCRIPTIONS:
             click.echo(f"  {stack}:")
             for tool, desc in STACK_DESCRIPTIONS[stack]:
-                click.echo(f"    {tool:<14} — {desc}")
+                tool_bin = tool.lower() if tool != "Biome" else "biome"
+                if tool_bin in ("type checker",):
+                    # Meta-entries without a single binary to check
+                    click.echo(f"    {tool:<14} — {desc}")
+                elif tool_available(tool_bin, project_dir):
+                    click.echo(f"    {tool:<14} — {desc:<30} \u2713 installed")
+                else:
+                    hint = INSTALL_HINTS.get(tool, "")
+                    suffix = f" ({hint})" if hint else ""
+                    click.echo(f"    {tool:<14} — {desc:<30} \u2717 not found{suffix}")
             click.echo()
 
     # Confirmation

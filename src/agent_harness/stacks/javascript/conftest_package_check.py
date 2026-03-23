@@ -11,7 +11,7 @@ failures and non-deterministic dependency resolution.
 WITHOUT IT: Node version mismatches in CI/deploy, mixed ESM/CJS module errors,
 different dependency versions on every npm install.
 
-FIX: Run `agent-harness audit` to see specific package.json issues.
+FIX: Run `agent-harness lint` to see specific package.json issues.
 
 REQUIRES: conftest (via PATH)
 """

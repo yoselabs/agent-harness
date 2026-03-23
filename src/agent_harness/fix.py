@@ -1,7 +1,10 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+
+import shutil
+
 from agent_harness.config import load_config
 from agent_harness.runner import run_check
-import shutil
 
 
 def run_fix(project_dir: Path) -> list[str]:
@@ -48,3 +51,23 @@ def run_fix(project_dir: Path) -> list[str]:
             actions.append("biome: not installed, skipping fix")
 
     return actions
+
+
+def run_fix_all(project_dir: Path) -> dict[Path, list[str]]:
+    """Discover all subprojects and run fix in each."""
+    from agent_harness.workspace import discover_roots
+
+    roots = discover_roots(project_dir)
+    if not roots:
+        return {project_dir: run_fix(project_dir)}
+
+    all_results: dict[Path, list[str]] = {}
+    with ThreadPoolExecutor() as pool:
+        futures = {pool.submit(run_fix, root): root for root in roots}
+        for future in as_completed(futures):
+            root = futures[future]
+            try:
+                all_results[root] = future.result()
+            except Exception as e:
+                all_results[root] = [f"error: {e}"]
+    return all_results
