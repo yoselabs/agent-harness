@@ -1,5 +1,5 @@
 ---
-name: ai-harness
+name: agent-harness
 description: "Harness engineering for AI agents. Use when setting up a new project, auditing harness coverage, or when agent output is too noisy. Triggers: 'harness audit', 'check harness', 'apply harness', new project setup, first commit on a new repo."
 ---
 
@@ -30,7 +30,7 @@ agent-harness fix      # auto-fix, then lint
 ## When NOT to Use
 
 - Business logic, architecture, or domain modeling
-- Deployment conventions or infrastructure (use deployment-platform skill)
+- Deployment operations (use deployment-platform skill)
 - General style questions (just answer directly)
 - Fixing one specific tool config (help directly)
 
@@ -55,12 +55,12 @@ Agent-harness detects and enforces per stack:
 
 ## Guidance
 
-When writing new Docker, compose, or Python code, read the guidance docs for recipes and patterns:
+When writing Docker, compose, or Python code — read the guidance files in this skill directory for recipes and patterns that help write correct code the first time:
 
-- **Docker** — `docs/guidance/docker.md`: healthcheck recipes (PostgreSQL, Redis, MySQL, HTTP, auth-protected, Alpine, distroless), dependency chains, migration patterns, config file strategy, base image selection
-- **Python** — `docs/guidance/python.md`: why each pyproject.toml knob matters
+- **`docker-guidance.md`** — healthcheck recipes (PostgreSQL, Redis, MySQL, HTTP, auth-protected, Alpine, distroless), dependency chains, migration patterns, config file strategy, base image selection
+- **`python-guidance.md`** — why each pyproject.toml knob matters
 
-These are non-deterministic best practices — judgment calls that can't be linted but help agents write correct code the first time.
+These are non-deterministic best practices. They can't be linted but prevent common mistakes.
 
 ## Policy WHY Blocks
 
