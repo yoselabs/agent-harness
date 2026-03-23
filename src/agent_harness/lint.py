@@ -12,6 +12,7 @@ from agent_harness.stacks.universal.file_length_check import run_file_length
 from agent_harness.stacks.docker.hadolint_check import run_hadolint
 from agent_harness.stacks.docker.conftest_dockerfile_check import run_conftest_dockerfile
 from agent_harness.stacks.docker.conftest_compose_check import run_conftest_compose
+from agent_harness.stacks.dokploy.conftest_dokploy_check import run_conftest_dokploy
 from agent_harness.stacks.javascript.biome_check import run_biome
 from agent_harness.stacks.javascript.type_check import run_type_check
 from agent_harness.stacks.javascript.conftest_package_check import run_conftest_package
@@ -43,6 +44,10 @@ def run_lint(project_dir: Path) -> list[CheckResult]:
         results.append(run_conftest_dockerfile(project_dir))
         results.append(run_conftest_compose(project_dir, config.docker.own_image_prefix))
         results.append(run_hadolint(project_dir))
+
+    # Dokploy checks
+    if "dokploy" in config.stacks:
+        results.append(run_conftest_dokploy(project_dir))
 
     # JavaScript checks
     if "javascript" in config.stacks:

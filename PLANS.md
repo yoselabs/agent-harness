@@ -18,6 +18,7 @@
 - **JSONC skipping** — tsconfig.json, jsconfig.json, .vscode/ skipped by conftest-json
 - **Extension-aware file length** — .py/.ts/.js: 500, .astro/.vue/.svelte: 800. Moved from Python-only to universal.
 - **Biome VCS integration** — respects .gitignore via --vcs-enabled, skips dist/, .astro/, node_modules/
+- **Dokploy stack** — auto-detection from `dokploy-network` in compose files, 2 Rego policies (traefik.enable required, dokploy-network required for Traefik-routed services)
 - Tested on real JS project (iorlas.com Astro blog), 60 Python tests + 73 Rego tests
 
 ## Next (v0.2)

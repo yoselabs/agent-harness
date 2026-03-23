@@ -4,6 +4,7 @@ from pathlib import Path
 from agent_harness.stacks.python.detect import detect_python
 from agent_harness.stacks.docker.detect import detect_docker
 from agent_harness.stacks.javascript.detect import detect_javascript
+from agent_harness.stacks.dokploy.detect import detect_dokploy
 
 
 def detect_stacks(project_dir: Path) -> set[str]:
@@ -15,4 +16,6 @@ def detect_stacks(project_dir: Path) -> set[str]:
         stacks.add("docker")
     if detect_javascript(project_dir):
         stacks.add("javascript")
+    if detect_dokploy(project_dir):
+        stacks.add("dokploy")
     return stacks
