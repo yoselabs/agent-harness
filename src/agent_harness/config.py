@@ -1,57 +1,42 @@
+"""Config loading — dict-based, each preset reads its own section."""
+
 from __future__ import annotations
-from dataclasses import dataclass, field
+
 from pathlib import Path
+
 import yaml
-from agent_harness.detect import detect_stacks
 
 
-@dataclass
-class PythonConfig:
-    coverage_threshold: int = 95
-    line_length: int = 140
-    max_file_lines: int = 500
-
-
-@dataclass
-class DockerConfig:
-    own_image_prefix: str = ""
-
-
-@dataclass
-class JavaScriptConfig:
-    coverage_threshold: int = 80
-
-
-@dataclass
-class HarnessConfig:
-    stacks: set[str] = field(default_factory=set)
-    exclude: list[str] = field(default_factory=list)
-    python: PythonConfig = field(default_factory=PythonConfig)
-    docker: DockerConfig = field(default_factory=DockerConfig)
-    javascript: JavaScriptConfig = field(default_factory=JavaScriptConfig)
-
-
-def load_config(project_dir: Path) -> HarnessConfig:
-    config = HarnessConfig()
+def load_config(project_dir: Path) -> dict:
+    """Load .agent-harness.yml. Returns dict."""
+    config: dict = {"stacks": set(), "exclude": []}
     cfg_path = project_dir / ".agent-harness.yml"
+
     if cfg_path.exists():
-        raw = yaml.safe_load(cfg_path.read_text()) or {}
+        try:
+            raw = yaml.safe_load(cfg_path.read_text()) or {}
+        except yaml.YAMLError as e:
+            import click
+
+            click.echo(
+                f"  WARNING: {cfg_path} is malformed, using defaults\n  {e}", err=True
+            )
+            raw = {}
+
         if "stacks" in raw:
-            config.stacks = set(raw["stacks"])
+            config["stacks"] = set(raw["stacks"])
         if "exclude" in raw:
-            config.exclude = list(raw["exclude"])
-        if "python" in raw:
-            for k, v in raw["python"].items():
-                if hasattr(config.python, k):
-                    setattr(config.python, k, v)
-        if "docker" in raw:
-            for k, v in raw["docker"].items():
-                if hasattr(config.docker, k):
-                    setattr(config.docker, k, v)
-        if "javascript" in raw:
-            for k, v in raw["javascript"].items():
-                if hasattr(config.javascript, k):
-                    setattr(config.javascript, k, v)
-    if not config.stacks:
-        config.stacks = detect_stacks(project_dir)
+            config["exclude"] = list(raw["exclude"])
+
+        # Pass through all other sections for presets to read
+        for key, value in raw.items():
+            if key not in ("stacks", "exclude"):
+                config[key] = value
+
+    # Auto-detect if no stacks specified
+    if not config["stacks"]:
+        from agent_harness.registry import PRESETS
+
+        config["stacks"] = {p.name for p in PRESETS if p.detect(project_dir)}
+
     return config

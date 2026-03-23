@@ -8,29 +8,9 @@ from agent_harness.init.templates import (
     PRECOMMIT_YML,
     MAKEFILE,
 )
+from agent_harness.registry import PRESETS
 from agent_harness.runner import tool_available
-from agent_harness.stacks.javascript.templates import BIOME_CONFIG
-
-STACK_DESCRIPTIONS = {
-    "python": [
-        ("ruff", "linting + formatting"),
-        ("ty", "type checking"),
-        ("conftest", "pyproject.toml config enforcement"),
-    ],
-    "javascript": [
-        ("Biome", "linting + formatting"),
-        ("type checker", "astro check / next lint / tsc"),
-        ("conftest", "package.json config enforcement"),
-    ],
-    "docker": [
-        ("hadolint", "Dockerfile best practices"),
-        ("conftest", "compose healthchecks, image pinning, ports, volumes"),
-        ("yamllint", "YAML validation"),
-    ],
-    "dokploy": [
-        ("conftest", "traefik.enable, dokploy-network for routed services"),
-    ],
-}
+from agent_harness.presets.javascript.templates import BIOME_CONFIG
 
 
 def scaffold_project(project_dir: Path, yes: bool = False) -> list[str]:
@@ -42,29 +22,21 @@ def scaffold_project(project_dir: Path, yes: bool = False) -> list[str]:
     # Show what was detected
     click.echo(f"  Detected stacks: {stacks_str}")
     click.echo()
-    INSTALL_HINTS = {
-        "ruff": "uv add ruff --dev",
-        "ty": "uv add ty --dev",
-        "conftest": "brew install conftest",
-        "hadolint": "brew install hadolint",
-        "yamllint": "pip install yamllint",
-        "Biome": "npm install --save-dev @biomejs/biome",
-    }
 
-    for stack in sorted(stacks):
-        if stack in STACK_DESCRIPTIONS:
-            click.echo(f"  {stack}:")
-            for tool, desc in STACK_DESCRIPTIONS[stack]:
-                tool_bin = tool.lower() if tool != "Biome" else "biome"
-                if tool_bin in ("type checker",):
-                    # Meta-entries without a single binary to check
-                    click.echo(f"    {tool:<14} — {desc}")
-                elif tool_available(tool_bin, project_dir):
-                    click.echo(f"    {tool:<14} — {desc:<30} \u2713 installed")
-                else:
-                    hint = INSTALL_HINTS.get(tool, "")
-                    suffix = f" ({hint})" if hint else ""
-                    click.echo(f"    {tool:<14} — {desc:<30} \u2717 not found{suffix}")
+    for preset in PRESETS:
+        if preset.name in stacks:
+            info = preset.get_info()
+            click.echo(f"  {info.name}:")
+            for tool in info.tools:
+                available = tool_available(tool.binary, project_dir)
+                status = (
+                    "\u2713 installed"
+                    if available
+                    else f"\u2717 not found ({tool.install_hint})"
+                )
+                click.echo(
+                    f"    {tool.name:<14} \u2014 {tool.description:<30} {status}"
+                )
             click.echo()
 
     # Confirmation
