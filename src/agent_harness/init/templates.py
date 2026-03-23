@@ -43,3 +43,16 @@ repos:
         pass_filenames: false
         always_run: true
 """
+
+MAKEFILE = """\
+.PHONY: lint fix test
+
+lint:
+\tagent-harness lint
+
+fix:
+\tagent-harness fix
+
+test:
+\t{test_command}
+"""

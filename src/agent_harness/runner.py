@@ -3,6 +3,7 @@ import subprocess
 import shutil
 import time
 from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass
@@ -12,6 +13,19 @@ class CheckResult:
     output: str = ""
     error: str = ""
     duration_ms: int = 0
+
+
+def tool_available(tool: str, project_dir: Path) -> bool:
+    """Check if a tool is available — globally, in .venv, or in node_modules."""
+    if shutil.which(tool):
+        return True
+    venv_bin = project_dir / ".venv" / "bin" / tool
+    if venv_bin.exists():
+        return True
+    node_bin = project_dir / "node_modules" / ".bin" / tool
+    if node_bin.exists():
+        return True
+    return False
 
 
 def run_check(name: str, cmd: list[str], cwd: str | None = None) -> CheckResult:

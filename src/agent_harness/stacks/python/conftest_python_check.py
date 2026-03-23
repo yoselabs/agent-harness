@@ -13,7 +13,7 @@ WITHOUT IT: Phantom test markers that select nothing, opaque dot-based test
 output, coverage gaps discovered only in CI, and tests accidentally running
 against production databases.
 
-FIX: Run `agent-harness audit` to see specific pyproject.toml issues and
+FIX: Run `agent-harness lint` to see specific pyproject.toml issues and
 their fixes.
 
 REQUIRES: conftest (via PATH)
