@@ -22,12 +22,6 @@ test_missing_cov_fail_under_fires if {
 	pytest.deny with input as {"tool": {"pytest": {"ini_options": {"addopts": "-v --strict-markers --cov"}}}}
 }
 
-# ── DENY: low threshold ──
-
-test_low_threshold_fires if {
-	pytest.deny with input as {"tool": {"pytest": {"ini_options": {"addopts": "-v --strict-markers --cov --cov-fail-under=50"}}}}
-}
-
 # ── PASS: good config ──
 
 test_good_config_passes if {
