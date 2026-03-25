@@ -116,13 +116,25 @@ def fix(run_all):
 
 
 @cli.command()
-@click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompt")
-def init(yes):
-    """Diagnose harness setup and scaffold missing configs."""
+@click.option("--apply", is_flag=True, help="Apply fixes and create missing files")
+def init(apply):
+    """Diagnose harness setup: check tools, config quality, missing files.
+
+    Without --apply: report mode (shows issues, suggests fixes).
+    With --apply: applies auto-fixes and creates missing config files.
+
+    Setup checks diagnose configuration quality (thresholds, flags,
+    coverage settings) and offer fixes. Lint checks run separately
+    via 'agent-harness lint' for fast pass/fail enforcement.
+
+    Examples:
+      agent-harness init            # diagnose only
+      agent-harness init --apply    # diagnose and fix
+    """
     from agent_harness.init.scaffold import scaffold_project
 
-    actions = scaffold_project(Path.cwd(), yes=yes)
+    actions = scaffold_project(Path.cwd(), apply=apply)
     for action in actions:
         click.echo(f"  {action}")
-    if actions and actions[0] != "Cancelled":
-        click.echo("\n  Harness initialized. Run: make lint")
+    if actions:
+        click.echo("\n  Done. Run: make lint")
