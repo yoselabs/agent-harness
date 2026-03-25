@@ -1,15 +1,16 @@
 import click
 from pathlib import Path
 
+from agent_harness.config import load_config
 from agent_harness.detect import detect_stacks
+from agent_harness.init.diagnostic import display_diagnostics, display_summary
 from agent_harness.init.templates import (
     HARNESS_YML,
     YAMLLINT_YML,
     PRECOMMIT_YML,
     MAKEFILE,
 )
-from agent_harness.registry import PRESETS
-from agent_harness.runner import tool_available
+from agent_harness.registry import PRESETS, UNIVERSAL
 from agent_harness.presets.javascript.templates import BIOME_CONFIG
 
 
@@ -19,30 +20,29 @@ def scaffold_project(project_dir: Path, yes: bool = False) -> list[str]:
     stacks_str = ", ".join(sorted(stacks)) if stacks else "none detected"
     stacks_list = ", ".join(sorted(stacks))
 
+    config = load_config(project_dir)
+
     # Show what was detected
     click.echo(f"  Detected stacks: {stacks_str}")
-    click.echo()
 
+    total_critical = 0
+    total_recommendations = 0
+
+    # Run diagnostics for each active preset
     for preset in PRESETS:
         if preset.name in stacks:
+            diagnostics = preset.run_diagnostic(project_dir, config)
             info = preset.get_info()
-            click.echo(f"  {info.name}:")
-            for tool in info.tools:
-                available = tool_available(tool.binary, project_dir)
-                status = (
-                    "\u2713 installed"
-                    if available
-                    else f"\u2717 not found ({tool.install_hint})"
-                )
-                click.echo(
-                    f"    {tool.name:<14} \u2014 {tool.description:<30} {status}"
-                )
-            click.echo()
+            c, r = display_diagnostics(preset.name, diagnostics, info.tools, project_dir)
+            total_critical += c
+            total_recommendations += r
 
-    # Confirmation
-    if not yes:
-        if not click.confirm("  Proceed?", default=True):
-            return ["Cancelled"]
+    # Run universal preset diagnostics
+    universal_diagnostics = UNIVERSAL.run_diagnostic(project_dir, config)
+    universal_info = UNIVERSAL.get_info()
+    c, r = display_diagnostics("universal", universal_diagnostics, universal_info.tools, project_dir)
+    total_critical += c
+    total_recommendations += r
 
     # Determine test command for Makefile
     if "python" in stacks:
@@ -52,7 +52,6 @@ def scaffold_project(project_dir: Path, yes: bool = False) -> list[str]:
     else:
         test_command = 'echo "no test command configured"'
 
-    actions = []
     files: dict[str, str] = {
         ".agent-harness.yml": HARNESS_YML.format(
             stacks=stacks_str, stacks_list=stacks_list
@@ -66,6 +65,29 @@ def scaffold_project(project_dir: Path, yes: bool = False) -> list[str]:
     if "javascript" in stacks:
         files["biome.json"] = BIOME_CONFIG
 
+    # Determine missing files
+    missing_files = [f for f in files if not (project_dir / f).exists()]
+    missing_file_count = len(missing_files)
+
+    # Display missing files section
+    if missing_files:
+        click.echo("\n  Files to create:")
+        for filename in missing_files:
+            click.echo(f"    + {filename}")
+
+    # Show summary
+    display_summary(total_critical, total_recommendations, missing_file_count)
+
+    # If no files to create, we're done
+    if not missing_files:
+        return []
+
+    # Confirmation
+    if not yes:
+        if not click.confirm("\n  Proceed?", default=True):
+            return ["Cancelled"]
+
+    actions = []
     for filename, content in files.items():
         path = project_dir / filename
         if path.exists():
