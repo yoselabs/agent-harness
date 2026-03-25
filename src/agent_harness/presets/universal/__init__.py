@@ -41,6 +41,20 @@ class UniversalPreset(Preset):
         )
         return results
 
+    def run_diagnostic(self, project_dir: Path, config: dict):
+        from agent_harness.conftest import run_conftest_diagnostic
+
+        results = []
+        stacks = config.get("stacks", set())
+        stacks_data = {"stacks": list(stacks)} if stacks else None
+        results.append(
+            run_conftest_diagnostic(
+                "universal-gitignore", project_dir, ".gitignore", "universal",
+                data=stacks_data,
+            )
+        )
+        return results
+
     def run_fix(self, project_dir: Path, config: dict) -> list[str]:
         return []
 

@@ -25,6 +25,15 @@ class PythonPreset(Preset):
         results.append(run_conftest_python(project_dir))
         return results
 
+    def run_diagnostic(self, project_dir: Path, config: dict):
+        from agent_harness.conftest import run_conftest_diagnostic
+
+        results = []
+        results.append(
+            run_conftest_diagnostic("python-config", project_dir, "pyproject.toml", "python")
+        )
+        return results
+
     def run_fix(self, project_dir: Path, config: dict) -> list[str]:
         from .fix import run_python_fix
 
