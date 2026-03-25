@@ -48,9 +48,13 @@ def display_summary(critical: int, recommendations: int, missing_files: int) -> 
     if critical:
         parts.append(f"{critical} critical")
     if recommendations:
-        parts.append(f"{recommendations} recommendation{'s' if recommendations != 1 else ''}")
+        parts.append(
+            f"{recommendations} recommendation{'s' if recommendations != 1 else ''}"
+        )
     if missing_files:
-        parts.append(f"{missing_files} file{'s' if missing_files != 1 else ''} to create")
+        parts.append(
+            f"{missing_files} file{'s' if missing_files != 1 else ''} to create"
+        )
 
     if parts:
         click.echo(f"\n  {', '.join(parts)}.")

@@ -118,7 +118,7 @@ def fix(run_all):
 @cli.command()
 @click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompt")
 def init(yes):
-    """Scaffold configs and Makefile for detected stacks."""
+    """Diagnose harness setup and scaffold missing configs."""
     from agent_harness.init.scaffold import scaffold_project
 
     actions = scaffold_project(Path.cwd(), yes=yes)

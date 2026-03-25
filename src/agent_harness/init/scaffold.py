@@ -33,14 +33,18 @@ def scaffold_project(project_dir: Path, yes: bool = False) -> list[str]:
         if preset.name in stacks:
             diagnostics = preset.run_diagnostic(project_dir, config)
             info = preset.get_info()
-            c, r = display_diagnostics(preset.name, diagnostics, info.tools, project_dir)
+            c, r = display_diagnostics(
+                preset.name, diagnostics, info.tools, project_dir
+            )
             total_critical += c
             total_recommendations += r
 
     # Run universal preset diagnostics
     universal_diagnostics = UNIVERSAL.run_diagnostic(project_dir, config)
     universal_info = UNIVERSAL.get_info()
-    c, r = display_diagnostics("universal", universal_diagnostics, universal_info.tools, project_dir)
+    c, r = display_diagnostics(
+        "universal", universal_diagnostics, universal_info.tools, project_dir
+    )
     total_critical += c
     total_recommendations += r
 

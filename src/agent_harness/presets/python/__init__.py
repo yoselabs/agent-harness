@@ -30,7 +30,9 @@ class PythonPreset(Preset):
 
         results = []
         results.append(
-            run_conftest_diagnostic("python-config", project_dir, "pyproject.toml", "python")
+            run_conftest_diagnostic(
+                "python-config", project_dir, "pyproject.toml", "python"
+            )
         )
         return results
 

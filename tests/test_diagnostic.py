@@ -6,7 +6,6 @@ from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
 
 from agent_harness.conftest import DiagnosticResult
 from agent_harness.init.diagnostic import display_diagnostics, display_summary
@@ -15,7 +14,9 @@ from agent_harness.preset import ToolInfo
 
 def capture_output(fn, *args, **kwargs):
     output = StringIO()
-    with patch("click.echo", side_effect=lambda x="", **kw: output.write(str(x) + "\n")):
+    with patch(
+        "click.echo", side_effect=lambda x="", **kw: output.write(str(x) + "\n")
+    ):
         result = fn(*args, **kwargs)
     return output.getvalue(), result
 

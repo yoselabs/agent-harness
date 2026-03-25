@@ -34,7 +34,9 @@ class DockerPreset(Preset):
 
         results = []
         results.append(
-            run_conftest_diagnostic("docker-dockerfile", project_dir, "Dockerfile", "dockerfile")
+            run_conftest_diagnostic(
+                "docker-dockerfile", project_dir, "Dockerfile", "dockerfile"
+            )
         )
         compose_data = None
         own_prefix = config.get("docker", {}).get("own_image_prefix", "")
@@ -42,7 +44,10 @@ class DockerPreset(Preset):
             compose_data = {"own_image_prefix": own_prefix}
         results.append(
             run_conftest_diagnostic(
-                "docker-compose", project_dir, "docker-compose.prod.yml", "compose",
+                "docker-compose",
+                project_dir,
+                "docker-compose.prod.yml",
+                "compose",
                 data=compose_data,
             )
         )

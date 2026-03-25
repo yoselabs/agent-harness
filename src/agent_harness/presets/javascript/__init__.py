@@ -30,7 +30,9 @@ class JavaScriptPreset(Preset):
 
         results = []
         results.append(
-            run_conftest_diagnostic("javascript-config", project_dir, "package.json", "javascript")
+            run_conftest_diagnostic(
+                "javascript-config", project_dir, "package.json", "javascript"
+            )
         )
         return results
 

@@ -46,10 +46,13 @@ class UniversalPreset(Preset):
 
         results = []
         stacks = config.get("stacks", set())
-        stacks_data = {"stacks": list(stacks)} if stacks else None
+        stacks_data = {"stacks": sorted(stacks) if stacks else []}
         results.append(
             run_conftest_diagnostic(
-                "universal-gitignore", project_dir, ".gitignore", "universal",
+                "universal-gitignore",
+                project_dir,
+                ".gitignore",
+                "gitignore",
                 data=stacks_data,
             )
         )

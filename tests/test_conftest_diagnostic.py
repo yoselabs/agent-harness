@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from agent_harness.conftest import DiagnosticResult, run_conftest_diagnostic
+from agent_harness.conftest import run_conftest_diagnostic
 
 
 def test_diagnostic_missing_file(tmp_path):
@@ -29,22 +28,26 @@ def test_diagnostic_parses_json(tmp_path):
     target = tmp_path / "docker-compose.yml"
     target.write_text("version: '3'\n")
 
-    conftest_json = json.dumps([
-        {
-            "filename": str(target),
-            "namespace": "main",
-            "successes": 1,
-            "failures": [{"msg": "deny message one"}, {"msg": "deny message two"}],
-            "warnings": [{"msg": "warn message one"}],
-        }
-    ])
+    conftest_json = json.dumps(
+        [
+            {
+                "filename": str(target),
+                "namespace": "main",
+                "successes": 1,
+                "failures": [{"msg": "deny message one"}, {"msg": "deny message two"}],
+                "warnings": [{"msg": "warn message one"}],
+            }
+        ]
+    )
 
     mock_result = MagicMock()
     mock_result.stdout = conftest_json
     mock_result.returncode = 1
 
-    with patch("agent_harness.conftest._resolve_tool", return_value="/usr/bin/conftest"), \
-         patch("agent_harness.conftest.subprocess.run", return_value=mock_result):
+    with (
+        patch("agent_harness.conftest._resolve_tool", return_value="/usr/bin/conftest"),
+        patch("agent_harness.conftest.subprocess.run", return_value=mock_result),
+    ):
         result = run_conftest_diagnostic(
             name="test",
             project_dir=tmp_path,
@@ -86,8 +89,10 @@ def test_diagnostic_invalid_json(tmp_path):
     mock_result.stdout = "this is not json at all"
     mock_result.returncode = 1
 
-    with patch("agent_harness.conftest._resolve_tool", return_value="/usr/bin/conftest"), \
-         patch("agent_harness.conftest.subprocess.run", return_value=mock_result):
+    with (
+        patch("agent_harness.conftest._resolve_tool", return_value="/usr/bin/conftest"),
+        patch("agent_harness.conftest.subprocess.run", return_value=mock_result),
+    ):
         result = run_conftest_diagnostic(
             name="test",
             project_dir=tmp_path,
@@ -107,9 +112,17 @@ def test_diagnostic_with_data(tmp_path):
     target.write_text('{"name": "test"}\n')
 
     mock_result = MagicMock()
-    mock_result.stdout = json.dumps([
-        {"filename": str(target), "namespace": "main", "successes": 1, "failures": [], "warnings": []}
-    ])
+    mock_result.stdout = json.dumps(
+        [
+            {
+                "filename": str(target),
+                "namespace": "main",
+                "successes": 1,
+                "failures": [],
+                "warnings": [],
+            }
+        ]
+    )
     mock_result.returncode = 0
 
     captured_cmd = []
@@ -120,8 +133,10 @@ def test_diagnostic_with_data(tmp_path):
 
     extra_data = {"key": "value", "num": 42}
 
-    with patch("agent_harness.conftest._resolve_tool", return_value="/usr/bin/conftest"), \
-         patch("agent_harness.conftest.subprocess.run", side_effect=capture_run):
+    with (
+        patch("agent_harness.conftest._resolve_tool", return_value="/usr/bin/conftest"),
+        patch("agent_harness.conftest.subprocess.run", side_effect=capture_run),
+    ):
         result = run_conftest_diagnostic(
             name="test",
             project_dir=tmp_path,
