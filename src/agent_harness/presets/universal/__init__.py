@@ -2,6 +2,7 @@ from pathlib import Path
 
 from agent_harness.preset import Preset, PresetInfo, ToolInfo
 from agent_harness.runner import CheckResult
+from agent_harness.setup import SetupIssue
 
 
 class UniversalPreset(Preset):
@@ -47,6 +48,13 @@ class UniversalPreset(Preset):
         from .gitignore_tracked_fix import fix_gitignore_tracked
 
         return fix_gitignore_tracked(project_dir)
+
+    def run_setup(self, project_dir: Path, config: dict) -> list[SetupIssue]:
+        from .gitignore_setup import check_gitignore_setup
+
+        return check_gitignore_setup(
+            project_dir, stacks=config.get("stacks", set())
+        )
 
     def get_info(self) -> PresetInfo:
         return PresetInfo(
