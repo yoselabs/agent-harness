@@ -8,3 +8,4 @@ build/
 .coverage
 coverage.xml
 .worktrees/
+.DS_Store
