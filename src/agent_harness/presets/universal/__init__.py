@@ -16,6 +16,7 @@ class UniversalPreset(Preset):
         from .conftest_gitignore_check import run_conftest_gitignore
         from .conftest_json_check import run_conftest_json
         from .file_length_check import run_file_length
+        from .gitignore_tracked_check import run_gitignore_tracked
         from .yamllint_check import run_yamllint
 
         results = []
@@ -39,6 +40,7 @@ class UniversalPreset(Preset):
                 exclude_patterns=exclude,
             )
         )
+        results.append(run_gitignore_tracked(project_dir))
         return results
 
     def run_fix(self, project_dir: Path, config: dict) -> list[str]:
