@@ -23,6 +23,9 @@ def test_conftest_json_skips_jsonc_files(tmp_path, monkeypatch):
     monkeypatch.setattr(
         "agent_harness.presets.universal.conftest_json_check.subprocess.run", mock_run
     )
+    # Create files on disk so .exists() filter doesn't swallow them
+    (tmp_path / "tsconfig.json").write_text("{}")
+    (tmp_path / "package.json").write_text("{}")
     result = run_conftest_json(tmp_path, exclude_patterns=[])
     assert result.passed
 
@@ -41,6 +44,8 @@ def test_conftest_json_skips_excluded_files(tmp_path, monkeypatch):
     monkeypatch.setattr(
         "agent_harness.presets.universal.conftest_json_check.subprocess.run", mock_run
     )
+    # Create file on disk so .exists() filter doesn't swallow it
+    (tmp_path / "package-lock.json").write_text("{}")
     result = run_conftest_json(tmp_path, exclude_patterns=["package-lock.json"])
     assert result.passed
     assert "no JSON" in result.output.lower() or "skipping" in result.output.lower()

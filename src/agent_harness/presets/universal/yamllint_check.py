@@ -54,7 +54,11 @@ def run_yamllint(
         text=True,
         cwd=str(project_dir),
     )
-    yaml_files = [f for f in result.stdout.strip().splitlines() if f]
+    yaml_files = [
+        f
+        for f in result.stdout.strip().splitlines()
+        if f and (project_dir / f).exists()
+    ]
 
     # Filter exclusions
     if exclude_patterns:

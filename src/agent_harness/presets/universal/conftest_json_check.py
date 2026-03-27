@@ -51,7 +51,11 @@ def run_conftest_json(
             cwd=str(project_dir),
             timeout=10,
         )
-        json_files = [f for f in result.stdout.strip().splitlines() if f]
+        json_files = [
+            f
+            for f in result.stdout.strip().splitlines()
+            if f and (project_dir / f).exists()
+        ]
     except (subprocess.TimeoutExpired, FileNotFoundError):
         json_files = []
 
