@@ -52,7 +52,7 @@ repos:
 """
 
 MAKEFILE = """\
-.PHONY: lint fix test check bootstrap
+.PHONY: lint fix test check
 
 lint:
 \tagent-harness lint
@@ -64,17 +64,10 @@ test:
 \t{test_command}
 
 check: lint test
-
-bootstrap:
-\t@command -v agent-harness >/dev/null || (echo "Install: uv tool install agent-harness" && exit 1)
-\t@if command -v prek >/dev/null; then prek install; \\
-\telif command -v pre-commit >/dev/null; then pre-commit install; \\
-\telse echo "Install prek: brew install prek"; exit 1; fi
-\t@echo "Bootstrap complete. Run 'make check' to verify."
 """
 
 MAKEFILE_PYTHON = """\
-.PHONY: lint fix test check coverage-diff bootstrap
+.PHONY: lint fix test check coverage-diff
 
 lint:
 \tagent-harness lint
@@ -89,14 +82,6 @@ coverage-diff:
 \t@uv run diff-cover coverage.xml --compare-branch=origin/main --fail-under=95
 
 check: lint test coverage-diff
-
-bootstrap:
-\tuv sync
-\t@command -v agent-harness >/dev/null || (echo "Install: uv tool install agent-harness" && exit 1)
-\t@if command -v prek >/dev/null; then prek install; \\
-\telif command -v pre-commit >/dev/null; then pre-commit install; \\
-\telse echo "Install prek: brew install prek"; exit 1; fi
-\t@echo "Bootstrap complete. Run 'make check' to verify."
 """
 
 CLAUDEMD = """\
@@ -109,7 +94,6 @@ make lint          # agent-harness lint (runs all checks, safe anytime)
 make fix           # auto-fix formatting, then lint
 make test          # run tests{coverage_note}
 make check         # full gate: lint + test{coverage_diff_note}
-make bootstrap     # first-time setup: install deps + pre-commit hooks
 ```
 
 ## Workflow
