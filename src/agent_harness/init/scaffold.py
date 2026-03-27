@@ -10,8 +10,10 @@ from agent_harness.config import load_config
 from agent_harness.detect import detect_all, detect_stacks
 from agent_harness.init.diagnostic import display_setup_issues, display_summary
 from agent_harness.init.templates import (
+    CLAUDEMD,
     HARNESS_YML,
     MAKEFILE,
+    MAKEFILE_PYTHON,
     PRECOMMIT_YML,
     YAMLLINT_YML,
 )
@@ -58,12 +60,16 @@ def scaffold_project(project_dir: Path, apply: bool = False) -> list[str]:
     all_issues.extend(universal_issues)
 
     # Determine files to scaffold
-    if "python" in stacks:
+    is_python = "python" in stacks
+    if is_python:
         test_command = "uv run pytest tests/ -v"
     elif "javascript" in stacks:
         test_command = "npm test"
     else:
         test_command = 'echo "no test command configured"'
+
+    makefile_template = MAKEFILE_PYTHON if is_python else MAKEFILE
+    project_name = project_dir.name
 
     files: dict[str, str] = {
         ".agent-harness.yml": HARNESS_YML.format(
@@ -71,7 +77,17 @@ def scaffold_project(project_dir: Path, apply: bool = False) -> list[str]:
         ),
         ".yamllint.yml": YAMLLINT_YML,
         ".pre-commit-config.yaml": PRECOMMIT_YML,
-        "Makefile": MAKEFILE.format(test_command=test_command),
+        "Makefile": makefile_template.format(test_command=test_command),
+        "CLAUDE.md": CLAUDEMD.format(
+            project_name=project_name,
+            coverage_note=" (with coverage)" if is_python else "",
+            coverage_diff_note=" + coverage-diff" if is_python else "",
+            coverage_diff_workflow=(
+                "\nIf `make coverage-diff` fails, write tests for the uncovered lines you changed."
+                if is_python
+                else ""
+            ),
+        ),
     }
 
     if "javascript" in stacks:
