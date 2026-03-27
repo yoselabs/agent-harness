@@ -52,7 +52,11 @@ class UniversalPreset(Preset):
     def run_setup(self, project_dir: Path, config: dict) -> list[SetupIssue]:
         from .gitignore_setup import check_gitignore_setup
 
-        return check_gitignore_setup(project_dir, stacks=config.get("stacks", set()))
+        return check_gitignore_setup(
+            project_dir,
+            stacks=config.get("stacks", set()),
+            git_root=config.get("git_root"),
+        )
 
     def get_info(self) -> PresetInfo:
         return PresetInfo(

@@ -66,22 +66,39 @@ def test_fix_creates_gitignore_if_missing(tmp_path):
     assert "__pycache__" in content
 
 
-def test_monorepo_subproject_no_gitignore(tmp_path):
-    """Subproject without own .gitignore -> flagged as missing.
+def test_monorepo_subproject_uses_root_gitignore(tmp_path):
+    """Subproject without own .gitignore uses root's when git_root is set."""
+    from agent_harness.presets.universal.gitignore_setup import _load_expected_patterns
 
-    In a monorepo, the root .gitignore covers subprojects. But the setup
-    check runs per-subproject and looks for a local .gitignore. This test
-    documents the current behavior: subprojects without their own .gitignore
-    are flagged.
-    """
-    # Root has .gitignore
-    (tmp_path / ".gitignore").write_text(".DS_Store\n__pycache__/\n")
+    # Root has a complete .gitignore
+    patterns = _load_expected_patterns({"python"})
+    (tmp_path / ".gitignore").write_text("\n".join(patterns) + "\n")
     # Subproject has no .gitignore
     subproject = tmp_path / "services" / "api"
     subproject.mkdir(parents=True)
-    (subproject / "pyproject.toml").write_text("[project]\nname='api'\n")
 
-    issues = check_gitignore_setup(subproject, stacks={"python"})
-    # Currently flags as missing — documents known monorepo limitation
+    issues = check_gitignore_setup(subproject, stacks={"python"}, git_root=tmp_path)
+    assert issues == []
+
+
+def test_monorepo_subproject_root_incomplete(tmp_path):
+    """Subproject check reports missing patterns from root .gitignore."""
+    (tmp_path / ".gitignore").write_text(".env\n")
+    subproject = tmp_path / "services" / "api"
+    subproject.mkdir(parents=True)
+
+    issues = check_gitignore_setup(subproject, stacks={"python"}, git_root=tmp_path)
+    assert len(issues) == 1
+    assert "repo root" in issues[0].file
+    assert issues[0].fixable
+
+
+def test_monorepo_subproject_no_gitignore_anywhere(tmp_path):
+    """No .gitignore at root or subproject -> flagged with root path."""
+    subproject = tmp_path / "services" / "api"
+    subproject.mkdir(parents=True)
+
+    issues = check_gitignore_setup(subproject, stacks=set(), git_root=tmp_path)
     assert len(issues) == 1
     assert "No .gitignore found" in issues[0].message
+    assert "repo root" in issues[0].file

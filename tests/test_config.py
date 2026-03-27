@@ -1,3 +1,5 @@
+import subprocess
+
 from agent_harness.config import load_config
 
 
@@ -66,3 +68,25 @@ def test_load_config_passthrough_sections(tmp_path):
     )
     config = load_config(tmp_path)
     assert config["docker"]["own_image_prefix"] == "ghcr.io/myorg/"
+
+
+def test_load_config_git_root_resolved(tmp_path):
+    """Config includes git_root when inside a git repo."""
+    subprocess.run(["git", "init"], cwd=str(tmp_path), capture_output=True)
+    config = load_config(tmp_path)
+    assert config["git_root"] == tmp_path
+
+
+def test_load_config_git_root_none_outside_repo(tmp_path):
+    """Config git_root is None when not inside a git repo."""
+    config = load_config(tmp_path)
+    assert config["git_root"] is None
+
+
+def test_load_config_git_root_subdir(tmp_path):
+    """Config git_root points to repo root even from a subdirectory."""
+    subprocess.run(["git", "init"], cwd=str(tmp_path), capture_output=True)
+    subdir = tmp_path / "services" / "api"
+    subdir.mkdir(parents=True)
+    config = load_config(subdir)
+    assert config["git_root"] == tmp_path
