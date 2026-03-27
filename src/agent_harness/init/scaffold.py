@@ -119,6 +119,18 @@ def scaffold_project(project_dir: Path, apply: bool = False) -> list[str]:
 def scaffold_all(project_dir: Path, apply: bool = False) -> dict[Path, list[str]]:
     """Discover all project roots and scaffold each one."""
     all_roots = detect_all(project_dir)
+
+    mode = "Applying fixes" if apply else "Diagnosing setup"
+    click.echo(f"\n  {mode} for agent-harness quality gates.")
+
+    # Show discovered projects upfront
+    if len(all_roots) > 1:
+        root_names = []
+        for root in sorted(all_roots):
+            rel = "." if root == project_dir else str(root.relative_to(project_dir))
+            root_names.append(rel)
+        click.echo(f"  Found {len(all_roots)} projects: {', '.join(root_names)}")
+
     results: dict[Path, list[str]] = {}
     for root in sorted(all_roots):
         rel = "." if root == project_dir else str(root.relative_to(project_dir))
