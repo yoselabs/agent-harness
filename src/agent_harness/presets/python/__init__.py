@@ -26,7 +26,7 @@ class PythonPreset(Preset):
         return results
 
     def run_setup(self, project_dir, config):
-        from .setup import check_python_setup
+        from .setup_check import check_python_setup
 
         return check_python_setup(project_dir)
 

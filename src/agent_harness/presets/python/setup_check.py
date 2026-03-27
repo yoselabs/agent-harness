@@ -8,7 +8,7 @@ from typing import Any
 
 import tomlkit
 
-from agent_harness.setup import SetupIssue
+from agent_harness.setup_check import SetupIssue
 
 
 def _load_toml(project_dir: Path) -> dict[str, Any]:

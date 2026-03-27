@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from agent_harness.runner import CheckResult
-from agent_harness.setup import SetupIssue
+from agent_harness.setup_check import SetupIssue
 
 
 @dataclass

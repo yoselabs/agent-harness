@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from agent_harness.setup import SetupIssue
+from agent_harness.setup_check import SetupIssue
 
 
 def test_setup_issue_critical_with_fix():

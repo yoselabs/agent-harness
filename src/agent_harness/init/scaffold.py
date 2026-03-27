@@ -17,7 +17,7 @@ from agent_harness.init.templates import (
 )
 from agent_harness.presets.javascript.templates import BIOME_CONFIG
 from agent_harness.registry import PRESETS, UNIVERSAL
-from agent_harness.setup import SetupIssue
+from agent_harness.setup_check import SetupIssue
 
 
 def scaffold_project(project_dir: Path, apply: bool = False) -> list[str]:

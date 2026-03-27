@@ -8,7 +8,7 @@ import click
 
 from agent_harness.preset import ToolInfo
 from agent_harness.runner import tool_available
-from agent_harness.setup import SetupIssue
+from agent_harness.setup_check import SetupIssue
 
 
 def display_setup_issues(

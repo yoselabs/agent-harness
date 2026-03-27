@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from agent_harness.presets.python.setup import check_python_setup
+from agent_harness.presets.python.setup_check import check_python_setup
 
 
 def _write_pyproject(tmp_path: Path, content: str) -> Path:

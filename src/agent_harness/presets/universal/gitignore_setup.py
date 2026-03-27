@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from agent_harness.setup import SetupIssue
+from agent_harness.setup_check import SetupIssue
 
 _TEMPLATES_DIR = (
     Path(__file__).resolve().parent.parent.parent / "templates" / "gitignore"

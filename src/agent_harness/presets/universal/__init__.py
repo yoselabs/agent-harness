@@ -2,7 +2,7 @@ from pathlib import Path
 
 from agent_harness.preset import Preset, PresetInfo, ToolInfo
 from agent_harness.runner import CheckResult
-from agent_harness.setup import SetupIssue
+from agent_harness.setup_check import SetupIssue
 
 
 class UniversalPreset(Preset):

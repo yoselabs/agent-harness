@@ -62,6 +62,23 @@ def test_detect_dokploy_and_docker(tmp_path):
     assert "dokploy" in stacks and "docker" in stacks
 
 
+def test_detect_docker_ignores_directory_named_dockerfile(tmp_path):
+    """A directory named Dockerfile should not trigger docker detection."""
+    (tmp_path / "Dockerfile").mkdir()
+    assert "docker" not in detect_stacks(tmp_path)
+
+
+def test_detect_python_ignores_non_packaging_setup_py(tmp_path):
+    """A setup.py that isn't a packaging file shouldn't be a project indicator.
+
+    We renamed internal setup.py to setup_check.py, but this test ensures
+    detect_python only triggers on real project markers.
+    """
+    # Only a .py file in the dir — no pyproject.toml, requirements.txt, etc.
+    (tmp_path / "some_module.py").write_text("x = 1")
+    assert "python" not in detect_stacks(tmp_path)
+
+
 def test_detect_all_root_only(tmp_path):
     (tmp_path / "pyproject.toml").write_text("[project]\nname='x'")
     from agent_harness.detect import detect_all

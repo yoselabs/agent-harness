@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from agent_harness.init.diagnostic import display_setup_issues, display_summary
 from agent_harness.preset import ToolInfo
-from agent_harness.setup import SetupIssue
+from agent_harness.setup_check import SetupIssue
 
 
 def capture_output(fn, *args, **kwargs):
