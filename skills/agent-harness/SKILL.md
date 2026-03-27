@@ -103,7 +103,7 @@ Present a clear summary of what was done, what passed, and any remaining issues 
 - `agent-harness init` — Diagnose harness setup (report mode)
 - `agent-harness init --apply` — Apply auto-fixes and create missing config files
 - `agent-harness lint` — Run all harness checks (fast, pass/fail, blocks commits)
-- `agent-harness lint --all` — Lint all subprojects (monorepo mode)
+- `agent-harness lint` — Lint all subprojects (monorepo mode)
 - `agent-harness fix` — Auto-fix what's fixable (ruff format/check --fix), then lint
 - `agent-harness detect` — Show detected stacks and subprojects
 
@@ -111,7 +111,7 @@ Present a clear summary of what was done, what passed, and any remaining issues 
 
 - Setting up a new project — run the **Setup Workflow** above
 - Lint failures — run `agent-harness lint`, read error messages, fix issues
-- Monorepo with multiple subprojects — run `agent-harness lint --all`
+- Monorepo with multiple subprojects — run `agent-harness lint`
 - Checking config quality after changes — run `agent-harness init`
 
 ## When NOT to Use
@@ -133,7 +133,7 @@ When a user challenges a lint rule, read the WHY block from the check file or Re
 
 ## Monorepo Support
 
-- `agent-harness lint --all` discovers subprojects and runs checks in each
+- `agent-harness lint` auto-discovers subprojects and runs checks in each
 - Git root is resolved automatically — gitignore and pre-commit checks use the repo root, not the subproject directory
 - Each subproject can have its own `.agent-harness.yml` for stack overrides
 

@@ -2,7 +2,7 @@
 Workspace discovery.
 
 Finds all project roots (directories with .agent-harness.yml) in a repo tree.
-Used by `lint --all` and `fix --all` to run checks across monorepo subprojects.
+Used by lint and fix to run checks across monorepo subprojects.
 """
 
 from __future__ import annotations

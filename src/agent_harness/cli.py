@@ -47,14 +47,7 @@ def print_results(results) -> int:
 
 
 @cli.command()
-@click.option(
-    "--all",
-    "run_all",
-    is_flag=True,
-    hidden=True,
-    help="Deprecated — discovery is now always on",
-)
-def lint(run_all):
+def lint():
     """Run all harness checks (auto-discovers subprojects)."""
     from agent_harness.lint import run_lint_all
 
@@ -72,14 +65,7 @@ def lint(run_all):
 
 
 @cli.command()
-@click.option(
-    "--all",
-    "run_all",
-    is_flag=True,
-    hidden=True,
-    help="Deprecated — discovery is now always on",
-)
-def fix(run_all):
+def fix():
     """Auto-fix what's fixable, then lint (auto-discovers subprojects)."""
     from agent_harness.fix import run_fix_all
     from agent_harness.lint import run_lint_all

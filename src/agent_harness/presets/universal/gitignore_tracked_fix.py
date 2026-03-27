@@ -21,12 +21,16 @@ def fix_gitignore_tracked(project_dir: Path) -> list[str]:
     if not files:
         return []
 
-    subprocess.run(
+    rm_result = subprocess.run(
         ["git", "rm", "--cached"] + files,
         capture_output=True,
         text=True,
         cwd=str(project_dir),
     )
+    if rm_result.returncode != 0:
+        return [
+            f"gitignore-tracked: git rm --cached failed: {rm_result.stderr.strip()}"
+        ]
     count = len(files)
     return [
         f"gitignore-tracked: removed {count} file{'s' if count != 1 else ''} from git tracking"
