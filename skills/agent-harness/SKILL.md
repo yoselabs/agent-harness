@@ -18,6 +18,51 @@ agent-harness detect          # see what stacks are detected
 agent-harness init            # diagnose issues (report mode)
 ```
 
+### Step 1.5: Audit existing Makefiles and pre-commit hooks
+
+Before applying, read every Makefile in the project (root + all subprojects). Skip dependency directories (node_modules, .venv, vendor, dist). Also read `.pre-commit-config.yaml` if it exists.
+
+**What to look for:**
+
+1. **Duplicated work.** If a subproject Makefile runs `ruff`, `ty`, `biome`, `hadolint`, or any tool that agent-harness already runs — that's duplication. The subproject's `make lint` should delegate to `agent-harness lint`, not invoke tools directly. Flag every instance.
+
+2. **Bypassed tools.** If a Makefile runs `ruff` but NOT `ty` (or vice versa), an agent using that Makefile skips a gate. This is how type errors slip through — the agent runs the local `make lint`, gets a pass from ruff alone, and commits broken code.
+
+3. **Conflicting fix targets.** If a subproject's `make fix` runs `ruff format` but the root's `make fix` runs `agent-harness fix` (which also runs ruff), files may be formatted twice or with conflicting configs.
+
+4. **Missing delegation.** The root Makefile should call `agent-harness lint` (not individual tools). Subproject Makefiles should either delegate to `agent-harness lint` or to the root's `make lint` — never run tools independently.
+
+5. **Pre-commit hook misalignment.** If `.pre-commit-config.yaml` runs `make lint` but the Makefile's lint target doesn't include agent-harness, the hook is bypassed. The hook should run `make lint` and `make lint` should run `agent-harness lint`.
+
+6. **Stale targets.** Bootstrap targets that install tools agent-harness manages, test targets with different flags than what's in pyproject.toml, etc.
+
+**What to do with findings:**
+
+- Present all findings as a numbered list before applying fixes
+- For each finding, state what's wrong and what the fix should be
+- Propose Makefile rewrites that consolidate to agent-harness
+- Execute the fixes — don't ask permission for each one
+- If a subproject Makefile has non-lint targets (test, deploy, migrate) that are fine, leave those alone — only fix the lint/fix/check targets
+
+**Example of a bad subproject Makefile:**
+```makefile
+lint:
+    @uv run ruff format --check
+    @uv run ruff check
+    @uv run ty check     # <- agent-harness already runs all three
+fix:
+    uv run ruff check --fix
+    uv run ruff format   # <- agent-harness fix does this
+```
+
+**Example of a good subproject Makefile:**
+```makefile
+lint:
+    @agent-harness lint
+fix:
+    @agent-harness fix
+```
+
 ### Step 2: Apply fixes
 
 ```bash
