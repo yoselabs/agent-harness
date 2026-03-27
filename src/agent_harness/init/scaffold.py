@@ -12,7 +12,9 @@ from agent_harness.init.diagnostic import display_setup_issues, display_summary
 from agent_harness.init.templates import (
     HARNESS_YML,
     MAKEFILE,
+    MAKEFILE_ALL,
     PRECOMMIT_YML,
+    PRECOMMIT_YML_ALL,
     YAMLLINT_YML,
 )
 from agent_harness.presets.javascript.templates import BIOME_CONFIG
@@ -20,7 +22,9 @@ from agent_harness.registry import PRESETS, UNIVERSAL
 from agent_harness.setup_check import SetupIssue
 
 
-def scaffold_project(project_dir: Path, apply: bool = False) -> list[str]:
+def scaffold_project(
+    project_dir: Path, apply: bool = False, is_monorepo_root: bool = False
+) -> list[str]:
     """Diagnose setup, optionally apply fixes and scaffold files."""
     stacks = detect_stacks(project_dir)
     stacks_str = ", ".join(sorted(stacks)) if stacks else "none detected"
@@ -70,8 +74,12 @@ def scaffold_project(project_dir: Path, apply: bool = False) -> list[str]:
             stacks=stacks_str, stacks_list=stacks_list
         ),
         ".yamllint.yml": YAMLLINT_YML,
-        ".pre-commit-config.yaml": PRECOMMIT_YML,
-        "Makefile": MAKEFILE.format(test_command=test_command),
+        ".pre-commit-config.yaml": PRECOMMIT_YML_ALL
+        if is_monorepo_root
+        else PRECOMMIT_YML,
+        "Makefile": (MAKEFILE_ALL if is_monorepo_root else MAKEFILE).format(
+            test_command=test_command
+        ),
     }
 
     if "javascript" in stacks:
@@ -131,10 +139,15 @@ def scaffold_all(project_dir: Path, apply: bool = False) -> dict[Path, list[str]
             root_names.append(rel)
         click.echo(f"  Found {len(all_roots)} projects: {', '.join(root_names)}")
 
+    is_monorepo = len(all_roots) > 1
+
     results: dict[Path, list[str]] = {}
     for root in sorted(all_roots):
         rel = "." if root == project_dir else str(root.relative_to(project_dir))
         click.echo(f"\n=== {rel} ===")
-        actions = scaffold_project(root, apply=apply)
+        is_root = root == project_dir
+        actions = scaffold_project(
+            root, apply=apply, is_monorepo_root=is_monorepo and is_root
+        )
         results[root] = actions
     return results
