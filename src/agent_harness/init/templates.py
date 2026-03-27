@@ -36,6 +36,13 @@ PRECOMMIT_YML = """\
 repos:
   - repo: local
     hooks:
+      - id: harness-fix
+        name: auto-fix
+        entry: agent-harness fix
+        language: system
+        pass_filenames: false
+        always_run: true
+
       - id: harness-lint
         name: agent-harness lint
         entry: agent-harness lint

@@ -34,6 +34,8 @@ Before applying, read every Makefile in the project (root + all subprojects). Sk
 
 5. **Pre-commit hook misalignment.** If `.pre-commit-config.yaml` runs `make lint` but the Makefile's lint target doesn't include agent-harness, the hook is bypassed. The hook should run `make lint` and `make lint` should run `agent-harness lint`.
 
+6. **Missing fix-before-lint in pre-commit.** The pre-commit config should run `agent-harness fix` (or `make fix`) BEFORE `agent-harness lint`. This auto-formats code before committing instead of failing and requiring a manual fix step. If the config only has a lint hook, add a fix hook before it.
+
 6. **Stale targets.** Bootstrap targets that install tools agent-harness manages, test targets with different flags than what's in pyproject.toml, etc.
 
 **What to do with findings:**
