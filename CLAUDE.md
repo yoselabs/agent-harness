@@ -5,9 +5,10 @@ Deterministic quality gates for AI-assisted development. This project IS a harne
 ## Dev Commands
 
 ```bash
-make lint          # agent-harness lint (runs all checks)
-make fix           # agent-harness fix (auto-fix, then lint)
-make test          # pytest + conftest verify (all tests)
+make lint             # agent-harness lint (runs all checks)
+make fix              # agent-harness fix (auto-fix, then lint)
+make test             # pytest + conftest verify (all tests)
+make security-audit   # check deps for known vulnerabilities
 ```
 
 Install dev deps: `uv sync`

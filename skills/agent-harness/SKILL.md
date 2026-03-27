@@ -135,6 +135,7 @@ Present a clear summary of what was done, what passed, and any remaining issues 
 - `agent-harness lint` — Lint all subprojects (monorepo mode)
 - `agent-harness fix` — Auto-fix what's fixable (ruff format/check --fix), then lint
 - `agent-harness detect` — Show detected stacks and subprojects
+- `agent-harness security-audit` — Audit deps for known vulnerabilities (requires network)
 
 ## When to Use
 
@@ -153,10 +154,11 @@ Present a clear summary of what was done, what passed, and any remaining issues 
 
 Agent-harness auto-detects project stacks (Python, JavaScript, Docker, Dokploy) and runs the right checks. Every error message is actionable — read it, fix it, re-lint.
 
-### Two modes, clean separation
+### Three modes, clean separation
 
 - **lint** — Fast enforcement every commit. "Is this gate broken?" Checks: ruff, ty, conftest policies, yamllint, file length, gitignore tracked files, pre-commit hooks.
-- **init** — On-demand diagnostic. "Is this gate configured well?" Checks config quality, gitignore completeness against github/gitignore templates, missing tools.
+- **init** — On-demand diagnostic. "Is this gate configured well?" Checks config quality, gitignore completeness, CLAUDE.md workflow, missing tools.
+- **security-audit** — Dep vulnerability scan. "Are any new deps dangerous?" Only blocks on new + High/Critical + fix available. Runs in `make check`, not in lint.
 
 When a user challenges a lint rule, read the WHY block from the check file or Rego policy. When a user challenges an init recommendation, check `presets/*/setup.py` for the check logic.
 
