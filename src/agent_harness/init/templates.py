@@ -16,6 +16,13 @@ stacks: [{stacks_list}]
 
 # docker:
 #   own_image_prefix: "ghcr.io/myorg/"
+
+# security:
+#   base_branch: origin/main
+#   ignore:
+#     - id: CVE-2025-XXXX
+#       reason: "No fix available, transitive dep"
+#       expires: 2026-06-01
 """
 
 YAMLLINT_YML = """\
