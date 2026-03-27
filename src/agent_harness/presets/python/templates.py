@@ -13,7 +13,7 @@ that will generate pyproject.toml sections, CI workflows, and Dockerfiles.
 RUFF_CONFIG = """\
 [tool.ruff]
 target-version = "py312"
-line-length = 140           # Reduces unnecessary wrapping = less diff noise
+line-length = 120           # Reduces unnecessary wrapping = less diff noise
 output-format = "concise"   # One-line errors, no context blocks
 
 [tool.ruff.lint]

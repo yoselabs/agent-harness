@@ -9,7 +9,7 @@ stacks: [{stacks_list}]
 
 # python:
 #   coverage_threshold: 95
-#   line_length: 140
+#   line_length: 120
 
 # javascript:
 #   coverage_threshold: 80

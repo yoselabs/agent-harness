@@ -16,7 +16,7 @@ package python.ruff
 # WITHOUT IT: Noisy multi-line lint output, constant reformatting churn,
 # and 200-line monolith functions that no one can review.
 #
-# FIX: Set output-format = "concise", line-length = 140, and
+# FIX: Set output-format = "concise", line-length = 120, and
 # mccabe max-complexity = 10 in [tool.ruff] / [tool.ruff.lint.mccabe].
 #
 # Input: parsed pyproject.toml (TOML -> JSON)
@@ -44,7 +44,7 @@ deny contains msg if {
 deny contains msg if {
 	ruff := input.tool.ruff
 	not ruff["line-length"]
-	msg := "ruff: missing 'line-length' — set to 140 to reduce unnecessary wrapping noise"
+	msg := "ruff: missing 'line-length' — set to 120 to reduce unnecessary wrapping noise"
 }
 
 deny contains msg if {
