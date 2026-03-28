@@ -99,6 +99,13 @@ def scaffold_project(project_dir: Path, apply: bool = False) -> list[str]:
     if "javascript" in stacks:
         files["biome.json"] = BIOME_CONFIG
 
+    # Subprojects only get harness config + yamllint — not CLAUDE.md, Makefile, pre-commit
+    git_root = config.get("git_root")
+    is_subproject = git_root is not None and project_dir.resolve() != git_root.resolve()
+    if is_subproject:
+        subproject_files = {".agent-harness.yml", ".yamllint.yml"}
+        files = {k: v for k, v in files.items() if k in subproject_files}
+
     missing_files = [f for f in files if not (project_dir / f).exists()]
 
     if missing_files:
