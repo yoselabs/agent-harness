@@ -57,3 +57,13 @@ test_one_shot_on_dokploy_exempt if {
 		},
 	}}
 }
+
+# ── EXCEPTION: skip via exceptions list ──
+
+test_exception_skips_hostname if {
+	count(hostname.deny) == 0 with input as {"services": {"app": {
+		"image": "myapp:v1",
+		"networks": ["dokploy-network"],
+	}}}
+		with data.exceptions as ["compose.hostname"]
+}

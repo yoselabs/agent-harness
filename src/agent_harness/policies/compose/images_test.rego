@@ -47,3 +47,26 @@ test_own_image_pinned_passes if {
 	count(images.deny) == 0 with input as {"services": {"app": {"image": "ghcr.io/myorg/myapp:main-abc1234"}}}
 		with data.own_image_prefix as "ghcr.io/myorg/"
 }
+
+# ── EXCEPTION: skip via exceptions list ──
+
+test_exception_skips_build if {
+	count(images.deny) == 0 with input as {"services": {"app": {"build": "."}}}
+		with data.exceptions as ["compose.images_build"]
+}
+
+test_exception_skips_mutable_tag if {
+	count(images.deny) == 0 with input as {"services": {"redis": {"image": "redis:latest"}}}
+		with data.exceptions as ["compose.images_mutable_tag"]
+}
+
+test_exception_skips_implicit_latest if {
+	count(images.deny) == 0 with input as {"services": {"redis": {"image": "redis"}}}
+		with data.exceptions as ["compose.images_implicit_latest"]
+}
+
+test_exception_skips_pin_own if {
+	count(images.deny) == 0 with input as {"services": {"app": {"image": "ghcr.io/myorg/myapp:latest"}}}
+		with data.own_image_prefix as "ghcr.io/myorg/"
+		with data.exceptions as ["compose.images_pin_own", "compose.images_mutable_tag"]
+}

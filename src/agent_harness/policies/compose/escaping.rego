@@ -21,9 +21,16 @@ package compose.escaping
 
 import rego.v1
 
+default _exceptions := []
+
+_exceptions := data.exceptions if {
+	data.exceptions
+}
+
 # ── Policy: bare $ in environment values ──
 
 deny contains msg if {
+	not "compose.escaping" in _exceptions
 	some name, svc in input.services
 	env := svc.environment
 	is_object(env)
@@ -37,6 +44,7 @@ deny contains msg if {
 
 # Also check environment as list format: ["KEY=value"]
 deny contains msg if {
+	not "compose.escaping" in _exceptions
 	some name, svc in input.services
 	env := svc.environment
 	is_array(env)

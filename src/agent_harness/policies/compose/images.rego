@@ -24,9 +24,16 @@ package compose.images
 
 import rego.v1
 
+default _exceptions := []
+
+_exceptions := data.exceptions if {
+	data.exceptions
+}
+
 # ── Policy: no build directives ──
 
 deny contains msg if {
+	not "compose.images_build" in _exceptions
 	some name, svc in input.services
 	svc.build
 	msg := sprintf("services.%s: has 'build:' directive — pre-build images in CI, never on the server", [name])
@@ -38,6 +45,7 @@ deny contains msg if {
 mutable_tags := {":latest", ":main", ":master", ":dev"}
 
 deny contains msg if {
+	not "compose.images_mutable_tag" in _exceptions
 	some name, svc in input.services
 	image := svc.image
 
@@ -52,6 +60,7 @@ deny contains msg if {
 
 # Images with NO tag at all default to :latest implicitly
 deny contains msg if {
+	not "compose.images_implicit_latest" in _exceptions
 	some name, svc in input.services
 	image := svc.image
 
@@ -67,6 +76,7 @@ deny contains msg if {
 # ── Policy: own images must be pinned ──
 
 deny contains msg if {
+	not "compose.images_pin_own" in _exceptions
 	prefix := data.own_image_prefix
 	prefix != ""
 

@@ -20,9 +20,16 @@ package compose.hostname
 
 import rego.v1
 
+default _exceptions := []
+
+_exceptions := data.exceptions if {
+	data.exceptions
+}
+
 # ── Policy: services on dokploy-network must have hostname ──
 
 deny contains msg if {
+	not "compose.hostname" in _exceptions
 	some name, svc in input.services
 	not svc.hostname
 

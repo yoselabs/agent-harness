@@ -22,9 +22,16 @@ package dokploy.traefik
 
 import rego.v1
 
+default _exceptions := []
+
+_exceptions := data.exceptions if {
+	data.exceptions
+}
+
 # ── Policy: traefik.enable=true required when Traefik labels present ──
 
 deny contains msg if {
+	not "dokploy.traefik_enable" in _exceptions
 	some svc_name, svc in input.services
 	_has_traefik_routing_labels(svc)
 	not _has_traefik_enable(svc)
@@ -34,6 +41,7 @@ deny contains msg if {
 # ── Policy: dokploy-network required when Traefik labels present ──
 
 deny contains msg if {
+	not "dokploy.traefik_network" in _exceptions
 	some svc_name, svc in input.services
 	_has_traefik_routing_labels(svc)
 	not _on_dokploy_network(svc)

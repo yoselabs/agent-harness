@@ -30,3 +30,10 @@ test_docker_sock_allowed if {
 test_other_absolute_path_still_denied if {
 	count(volumes.deny) > 0 with input as {"services": {"app": {"volumes": ["/etc/config:/config"]}}}
 }
+
+# ── EXCEPTION: skip via exceptions list ──
+
+test_exception_skips_volumes if {
+	count(volumes.deny) == 0 with input as {"services": {"app": {"volumes": ["./config:/etc/app"]}}}
+		with data.exceptions as ["compose.volumes"]
+}

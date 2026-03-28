@@ -51,3 +51,25 @@ test_full_valid_config_passes if {
 		"ports": ["127.0.0.1:8080:8080"],
 	}}}
 }
+
+# ── EXCEPTION: skip via exceptions list ──
+
+test_exception_skips_healthcheck if {
+	count(services.deny) == 0 with input as {"services": {"app": {"image": "myapp:v1", "restart": "unless-stopped"}}}
+		with data.exceptions as ["compose.services_healthcheck"]
+}
+
+test_exception_skips_restart if {
+	count(services.deny) == 0 with input as {"services": {"app": {"image": "myapp:v1"}}}
+		with data.exceptions as ["compose.services_restart", "compose.services_healthcheck"]
+}
+
+test_exception_skips_ports if {
+	count(services.deny) == 0 with input as {"services": {"app": {
+		"image": "myapp:v1",
+		"restart": "unless-stopped",
+		"healthcheck": {"test": ["CMD", "curl", "-f", "http://localhost/"]},
+		"ports": ["0.0.0.0:8080:8080"],
+	}}}
+		with data.exceptions as ["compose.services_ports"]
+}

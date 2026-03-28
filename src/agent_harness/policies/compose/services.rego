@@ -23,9 +23,16 @@ package compose.services
 
 import rego.v1
 
+default _exceptions := []
+
+_exceptions := data.exceptions if {
+	data.exceptions
+}
+
 # ── Policy: every long-running service must have a healthcheck ──
 
 deny contains msg if {
+	not "compose.services_healthcheck" in _exceptions
 	some name, svc in input.services
 	not svc.healthcheck
 
@@ -42,6 +49,7 @@ deny contains msg if {
 # ── Policy: every long-running service must have a restart policy ──
 
 deny contains msg if {
+	not "compose.services_restart" in _exceptions
 	some name, svc in input.services
 	not svc.restart
 
@@ -56,6 +64,7 @@ deny contains msg if {
 # ── Policy: no 0.0.0.0 port bindings ──
 
 deny contains msg if {
+	not "compose.services_ports" in _exceptions
 	some name, svc in input.services
 	some port in svc.ports
 

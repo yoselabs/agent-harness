@@ -35,3 +35,12 @@ test_no_dollar_passes if {
 		"environment": {"PORT": "8080"},
 	}}}
 }
+
+# ── EXCEPTION: skip via exceptions list ──
+
+test_exception_skips_escaping if {
+	count(escaping.deny) == 0 with input as {"services": {"app": {
+		"environment": {"HASH": "$2a$12$abcdef"},
+	}}}
+		with data.exceptions as ["compose.escaping"]
+}

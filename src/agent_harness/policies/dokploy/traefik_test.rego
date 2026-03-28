@@ -67,3 +67,24 @@ test_network_object_form_passes if {
 	}}}
 	count(denials) == 0
 }
+
+# ── EXCEPTION: skip via exceptions list ──
+
+test_exception_skips_traefik_enable if {
+	count(traefik.deny) == 0 with input as {"services": {"app": {
+		"labels": ["traefik.http.routers.app.rule=Host(`app.example.com`)"],
+		"networks": ["dokploy-network"],
+	}}}
+		with data.exceptions as ["dokploy.traefik_enable"]
+}
+
+test_exception_skips_traefik_network if {
+	count(traefik.deny) == 0 with input as {"services": {"app": {
+		"labels": [
+			"traefik.enable=true",
+			"traefik.http.routers.app.rule=Host(`app.example.com`)",
+		],
+		"networks": ["app-internal"],
+	}}}
+		with data.exceptions as ["dokploy.traefik_network"]
+}

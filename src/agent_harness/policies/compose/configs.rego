@@ -19,7 +19,14 @@ package compose.configs
 
 import rego.v1
 
+default _exceptions := []
+
+_exceptions := data.exceptions if {
+	data.exceptions
+}
+
 deny contains msg if {
+	not "compose.configs" in _exceptions
 	some config_name, config in input.configs
 	config.content
 	msg := sprintf("compose: config '%s' uses inline 'content:' — changes are silently ignored on redeploy (docker/compose#11900)", [config_name])

@@ -19,7 +19,14 @@ package compose.volumes
 
 import rego.v1
 
+default _exceptions := []
+
+_exceptions := data.exceptions if {
+	data.exceptions
+}
+
 deny contains msg if {
+	not "compose.volumes" in _exceptions
 	some service_name, service in input.services
 	some volume in service.volumes
 	_is_bind_mount(volume)

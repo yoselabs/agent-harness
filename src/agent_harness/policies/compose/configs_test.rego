@@ -14,3 +14,10 @@ test_file_config_passes if {
 test_no_configs_passes if {
 	count(configs.deny) == 0 with input as {"services": {"app": {"image": "x"}}}
 }
+
+# ── EXCEPTION: skip via exceptions list ──
+
+test_exception_skips_configs if {
+	count(configs.deny) == 0 with input as {"configs": {"myconfig": {"content": "some data"}}}
+		with data.exceptions as ["compose.configs"]
+}
