@@ -17,16 +17,20 @@ class DockerPreset(Preset):
     ) -> list[CheckResult]:
         from .conftest_compose_check import run_conftest_compose
         from .conftest_dockerfile_check import run_conftest_dockerfile
+        from .detect import find_dockerfiles
         from .hadolint_check import run_hadolint
 
-        results = []
-        results.append(run_conftest_dockerfile(project_dir))
+        docker_config = config.get("docker", {})
+        conftest_skip = docker_config.get("conftest_skip", {})
+
+        dockerfiles = find_dockerfiles(project_dir)
+
+        results: list[CheckResult] = []
+        results.extend(run_conftest_dockerfile(project_dir, dockerfiles, conftest_skip))
         results.append(
-            run_conftest_compose(
-                project_dir, config.get("docker", {}).get("own_image_prefix", "")
-            )
+            run_conftest_compose(project_dir, docker_config.get("own_image_prefix", ""))
         )
-        results.extend(run_hadolint(project_dir))
+        results.extend(run_hadolint(project_dir, dockerfiles))
         return results
 
     def run_fix(self, project_dir: Path, config: dict) -> list[str]:
