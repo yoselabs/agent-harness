@@ -44,8 +44,8 @@ def check_claudemd_setup(project_dir: Path) -> list[SetupIssue]:
             SetupIssue(
                 file="CLAUDE.md",
                 message=(
-                    "mentions lint but not `make check` — "
-                    "run the agent-harness skill to audit workflow instructions"
+                    "CLAUDE.md should mention `make check` as the full quality gate "
+                    "(lint + test + security-audit)"
                 ),
                 severity="recommendation",
             )
