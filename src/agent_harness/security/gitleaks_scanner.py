@@ -74,8 +74,8 @@ def parse_gitleaks_output(output: str) -> list[AuditFinding]:
                 else f"gitleaks:{rule_id}",
                 severity="critical",  # Secrets are always critical
                 description=description,
-                fix_versions=["rotate secret"],  # Enables FAIL via classify()
-                is_new_dep=True,  # Always treat as new so classify() returns FAIL
+                fix_versions=[],
+                always_fail=True,  # Secrets always block — no WARN
             )
         )
 

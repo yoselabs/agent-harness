@@ -73,7 +73,7 @@ def test_parse_leak_always_fails():
     findings = parse_gitleaks_output(output)
     # Even in test files — no path exclusions
     assert findings[0].classify() == Classification.FAIL
-    assert findings[0].is_new_dep is True
+    assert findings[0].always_fail is True
 
 
 def test_parse_invalid_json():

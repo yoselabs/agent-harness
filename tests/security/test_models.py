@@ -79,6 +79,21 @@ def test_finding_classification_new_medium_fixable_is_warn():
     assert f.classify() == Classification.WARN
 
 
+def test_finding_always_fail_overrides_policy():
+    """always_fail=True bypasses the new/high/fix policy."""
+    f = AuditFinding(
+        package="secret.py",
+        version="abc123",
+        vuln_id="gitleaks:fp1",
+        severity="critical",
+        description="leaked secret",
+        fix_versions=[],
+        is_new_dep=False,
+        always_fail=True,
+    )
+    assert f.classify() == Classification.FAIL
+
+
 def test_report_has_failures():
     findings = [
         AuditFinding("pkg", "1.0", "CVE-1", "high", "bad", ["1.1"], is_new_dep=True),

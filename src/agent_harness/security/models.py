@@ -25,9 +25,18 @@ class AuditFinding:
     description: str
     fix_versions: list[str]
     is_new_dep: bool = False
+    always_fail: bool = (
+        False  # For findings that are unconditionally critical (e.g., leaked secrets)
+    )
 
     def classify(self) -> Classification:
-        """Apply the security policy: only FAIL on new + high/critical + fix available."""
+        """Apply the security policy.
+
+        Always FAIL: findings marked always_fail (leaked secrets).
+        CVE policy: only FAIL on new + high/critical + fix available.
+        """
+        if self.always_fail:
+            return Classification.FAIL
         has_fix = len(self.fix_versions) > 0
         is_high = self.severity in ("high", "critical")
         if self.is_new_dep and is_high and has_fix:
