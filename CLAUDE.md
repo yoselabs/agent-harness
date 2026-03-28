@@ -9,9 +9,16 @@ make lint             # agent-harness lint (runs all checks)
 make fix              # agent-harness fix (auto-fix, then lint)
 make test             # pytest + conftest verify (all tests)
 make security-audit   # check deps for known vulnerabilities
+make check            # full gate: lint + test + security-audit
 ```
 
 Install dev deps: `uv sync`
+
+## Workflow
+
+Pre-commit hooks run `agent-harness fix` and `agent-harness lint` automatically on every commit.
+Before declaring work done, always run `make check` — it's the full quality gate.
+
 
 ## Setup
 
@@ -91,3 +98,5 @@ A single topic (e.g., coverage threshold) can have both:
 - Never embed tool binaries — require them installed externally
 - Never run checks in Docker — must be <500ms local
 - Never duplicate `_run_conftest` — use `agent_harness.conftest.run_conftest()`
+- Never truncate lint/test output with `| tail` or `| head` — output is already optimized
+- Never skip `make check` before declaring a task complete
