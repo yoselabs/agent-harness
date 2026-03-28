@@ -4,10 +4,8 @@ from agent_harness.security.audit import run_security_audit
 from agent_harness.security.models import AuditFinding, SecurityReport
 
 
-def test_audit_python_project(tmp_path):
-    """Python project with pip-audit findings."""
-    (tmp_path / "pyproject.toml").write_text('[project]\ndependencies = ["requests"]\n')
-
+def test_audit_with_findings(tmp_path):
+    """Project with osv-scanner findings."""
     mock_findings = [
         AuditFinding(
             package="requests",
@@ -22,14 +20,13 @@ def test_audit_python_project(tmp_path):
 
     with (
         patch(
-            "agent_harness.security.audit.run_pip_audit",
-            return_value='{"dependencies":[],"fixes":[]}',
+            "agent_harness.security.audit.run_osv_scanner",
+            return_value='{"results":[]}',
         ),
         patch(
-            "agent_harness.security.audit.parse_pip_audit_output",
+            "agent_harness.security.audit.parse_osv_output",
             return_value=mock_findings,
         ),
-        patch("agent_harness.security.audit.detect_new_deps", return_value=set()),
     ):
         report = run_security_audit(tmp_path, stacks={"python"}, config={})
 
@@ -37,21 +34,9 @@ def test_audit_python_project(tmp_path):
     assert len(report.findings) == 1
 
 
-def test_audit_no_stacks(tmp_path):
-    """No stacks detected — empty report."""
-    report = run_security_audit(tmp_path, stacks=set(), config={})
-    assert isinstance(report, SecurityReport)
-    assert report.findings == []
-
-
 def test_audit_tool_unavailable(tmp_path):
-    """Audit tool not installed — empty report with no crash."""
-    (tmp_path / "pyproject.toml").write_text('[project]\ndependencies = ["requests"]\n')
-
-    with (
-        patch("agent_harness.security.audit.run_pip_audit", return_value=None),
-        patch("agent_harness.security.audit.detect_new_deps", return_value=set()),
-    ):
+    """osv-scanner not installed — empty report."""
+    with patch("agent_harness.security.audit.run_osv_scanner", return_value=None):
         report = run_security_audit(tmp_path, stacks={"python"}, config={})
 
     assert report.findings == []
@@ -59,8 +44,6 @@ def test_audit_tool_unavailable(tmp_path):
 
 def test_audit_applies_ignores(tmp_path):
     """Ignored CVEs should be reflected in the report."""
-    (tmp_path / "pyproject.toml").write_text('[project]\ndependencies = ["requests"]\n')
-
     mock_findings = [
         AuditFinding(
             "requests",
@@ -77,18 +60,23 @@ def test_audit_applies_ignores(tmp_path):
 
     with (
         patch(
-            "agent_harness.security.audit.run_pip_audit",
-            return_value='{"dependencies":[],"fixes":[]}',
+            "agent_harness.security.audit.run_osv_scanner",
+            return_value='{"results":[]}',
         ),
         patch(
-            "agent_harness.security.audit.parse_pip_audit_output",
+            "agent_harness.security.audit.parse_osv_output",
             return_value=mock_findings,
-        ),
-        patch(
-            "agent_harness.security.audit.detect_new_deps", return_value={"requests"}
         ),
     ):
         report = run_security_audit(tmp_path, stacks={"python"}, config=config)
 
     assert report.has_failures is False
     assert report.ignored_count == 1
+
+
+def test_audit_no_scanner_output(tmp_path):
+    """No lockfiles found — empty report."""
+    with patch("agent_harness.security.audit.run_osv_scanner", return_value=None):
+        report = run_security_audit(tmp_path, stacks=set(), config={})
+
+    assert report.findings == []
