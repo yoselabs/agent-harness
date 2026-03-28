@@ -28,7 +28,11 @@ class DockerPreset(Preset):
         results: list[CheckResult] = []
         results.extend(run_conftest_dockerfile(project_dir, dockerfiles, conftest_skip))
         results.append(
-            run_conftest_compose(project_dir, docker_config.get("own_image_prefix", ""))
+            run_conftest_compose(
+                project_dir,
+                docker_config.get("own_image_prefix", ""),
+                conftest_skip,
+            )
         )
         results.extend(run_hadolint(project_dir, dockerfiles))
         return results

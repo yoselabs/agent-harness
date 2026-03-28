@@ -28,15 +28,24 @@ from agent_harness.conftest import run_conftest as _run_conftest
 from agent_harness.runner import CheckResult
 
 
-def run_conftest_compose(project_dir: Path, own_image_prefix: str = "") -> CheckResult:
+def run_conftest_compose(
+    project_dir: Path,
+    own_image_prefix: str = "",
+    conftest_skip: dict[str, list[str]] | None = None,
+) -> CheckResult:
     """Run conftest on docker-compose.prod.yml with bundled compose policies."""
-    data = None
+    if conftest_skip is None:
+        conftest_skip = {}
+
+    target = "docker-compose.prod.yml"
+    skip = conftest_skip.get(target, [])
+
+    data: dict | None = {}
     if own_image_prefix:
-        data = {"own_image_prefix": own_image_prefix}
-    return _run_conftest(
-        "conftest-compose",
-        project_dir,
-        "docker-compose.prod.yml",
-        "compose",
-        data=data,
-    )
+        data["own_image_prefix"] = own_image_prefix
+    if skip:
+        data["exceptions"] = skip
+    if not data:
+        data = None
+
+    return _run_conftest("conftest-compose", project_dir, target, "compose", data=data)

@@ -17,7 +17,9 @@ class DokployPreset(Preset):
     ) -> list[CheckResult]:
         from .conftest_dokploy_check import run_conftest_dokploy
 
-        return [run_conftest_dokploy(project_dir)]
+        dokploy_config = config.get("dokploy", {})
+        conftest_skip = dokploy_config.get("conftest_skip", {})
+        return [run_conftest_dokploy(project_dir, conftest_skip)]
 
     def run_fix(self, project_dir: Path, config: dict) -> list[str]:
         return []

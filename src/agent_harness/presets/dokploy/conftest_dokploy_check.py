@@ -27,14 +27,22 @@ from agent_harness.runner import CheckResult
 COMPOSE_FILES = ["docker-compose.prod.yml", "docker-compose.yml"]
 
 
-def run_conftest_dokploy(project_dir: Path) -> CheckResult:
+def run_conftest_dokploy(
+    project_dir: Path,
+    conftest_skip: dict[str, list[str]] | None = None,
+) -> CheckResult:
     """Run conftest on compose files with bundled Dokploy policies."""
+    if conftest_skip is None:
+        conftest_skip = {}
+
     name = "conftest-dokploy"
     # Find the first compose file that exists
     for f in COMPOSE_FILES:
         target = project_dir / f
         if target.exists():
-            return _run_conftest(name, project_dir, f, "dokploy")
+            skip = conftest_skip.get(f, [])
+            data = {"exceptions": skip} if skip else None
+            return _run_conftest(name, project_dir, f, "dokploy", data=data)
 
     return CheckResult(
         name=name,
