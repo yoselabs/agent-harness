@@ -73,15 +73,6 @@ fix:
 agent-harness init --apply    # auto-fix config + create missing files
 ```
 
-### Step 2.7: Review .gitignore
-
-After `init --apply` appends missing patterns, review the full `.gitignore`:
-- Remove patterns for stacks no longer in the project (e.g., Dagster patterns in a project that no longer uses Dagster)
-- Consolidate duplicates that init couldn't detect (near-matches, overlapping globs)
-- Reorganize into logical category sections if the file has grown disorganized
-
-This is a judgment call — init does the safe mechanical work (grouped append), the agent does the contextual cleanup.
-
 ### Step 2.5: Audit CLAUDE.md
 
 Read the project's `CLAUDE.md` (if it exists). Check whether it includes these key workflow instructions. What to look for depends on the detected stacks:
@@ -108,6 +99,15 @@ Read the project's `CLAUDE.md` (if it exists). Check whether it includes these k
 - If CLAUDE.md already covers everything: move on.
 
 **Important:** This is an AI judgment call, not a mechanical check. Read the whole file, understand its structure, and add only what's missing in a way that flows with the existing content.
+
+### Step 2.6: Review .gitignore
+
+After `init --apply` appends missing patterns, review the full `.gitignore`:
+- Remove patterns for stacks no longer in the project (e.g., Dagster patterns in a project that no longer uses Dagster)
+- Consolidate duplicates that init couldn't detect (near-matches, overlapping globs)
+- Reorganize into logical category sections if the file has grown disorganized
+
+This is a judgment call — init does the safe mechanical work (grouped append), the agent does the contextual cleanup.
 
 ### Step 3: Install pre-commit hooks
 
@@ -184,6 +184,42 @@ Agent-harness auto-detects project stacks (Python, JavaScript, Docker, Dokploy) 
 - **security-audit-history** — Deep scan of full git history for secrets committed and later deleted. Run once during setup, then periodically in CI.
 
 When a user challenges a lint rule, read the WHY block from the check file or Rego policy. When a user challenges an init recommendation, check `presets/*/setup.py` for the check logic.
+
+## Conftest Exceptions
+
+Individual conftest policies can be skipped per file via `conftest_skip` in `.agent-harness.yml`. Use when a file legitimately violates a policy (e.g., a utility Dockerfile that must run as root).
+
+```yaml
+docker:
+  conftest_skip:
+    scripts/autonomy/Dockerfile:
+      - dockerfile.user
+      - dockerfile.healthcheck
+```
+
+**Valid exception IDs:**
+
+| ID | What it skips |
+|----|---------------|
+| `dockerfile.user` | USER instruction requirement |
+| `dockerfile.healthcheck` | HEALTHCHECK instruction requirement |
+| `dockerfile.cache` | `--mount=type=cache` on dep install |
+| `dockerfile.secrets` | Secret detection in ENV/ARG |
+| `dockerfile.layers` | Layer ordering (deps before source) |
+| `dockerfile.base_image` | Alpine + musl-sensitive stack warning |
+| `compose.services_healthcheck` | Service healthcheck requirement |
+| `compose.services_restart` | Restart policy requirement |
+| `compose.services_ports` | 0.0.0.0 port binding warning |
+| `compose.images_build` | No build directive |
+| `compose.images_mutable_tag` | Mutable tag + pull_policy |
+| `compose.images_implicit_latest` | No-tag implicit :latest |
+| `compose.images_pin_own` | Own image pinning |
+| `compose.escaping` | Bare $ in environment values |
+| `compose.hostname` | Hostname on dokploy-network |
+| `compose.volumes` | Bind mount detection |
+| `compose.configs` | Inline config content |
+| `dokploy.traefik_enable` | traefik.enable=true requirement |
+| `dokploy.traefik_network` | dokploy-network requirement |
 
 ## Monorepo Support
 
