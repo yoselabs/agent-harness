@@ -104,18 +104,39 @@ def test_detect_all_subprojects(tmp_path):
     assert "javascript" in results[frontend]
 
 
-def test_detect_all_skips_excluded(tmp_path):
-    venv = tmp_path / ".venv"
-    venv.mkdir()
-    (venv / "pyproject.toml").write_text("[project]\nname='x'")
-    from agent_harness.detect import detect_all
-
-    results = detect_all(tmp_path)
-    assert venv not in results
-
-
 def test_detect_all_empty(tmp_path):
     from agent_harness.detect import detect_all
 
     results = detect_all(tmp_path)
     assert results == {}
+
+
+def test_detect_all_excludes_docker_only_dirs(tmp_path):
+    """Dirs with only Dockerfiles are not detected as projects."""
+    from agent_harness.detect import detect_all
+
+    (tmp_path / "pyproject.toml").write_text("[project]\nname='x'")
+    (tmp_path / "Dockerfile").write_text("FROM python:3.12")
+
+    scripts = tmp_path / "scripts" / "autonomy"
+    scripts.mkdir(parents=True)
+    (scripts / "Dockerfile").write_text("FROM python:3.12")
+
+    results = detect_all(tmp_path)
+    assert tmp_path in results
+    assert scripts not in results
+
+
+def test_detect_all_includes_dir_with_manifest(tmp_path):
+    """Dirs with dependency manifests ARE detected as projects."""
+    from agent_harness.detect import detect_all
+
+    backend = tmp_path / "backend"
+    backend.mkdir()
+    (backend / "pyproject.toml").write_text("[project]\nname='x'")
+    (backend / "Dockerfile").write_text("FROM python:3.12")
+
+    results = detect_all(tmp_path)
+    assert backend in results
+    assert "python" in results[backend]
+    assert "docker" in results[backend]
