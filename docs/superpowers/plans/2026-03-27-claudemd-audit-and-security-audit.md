@@ -4,9 +4,11 @@
 
 **Goal:** Add CLAUDE.md adaptive audit (init check + skill guidance) and a new `agent-harness security-audit` command that blocks only when a newly-added dependency has a High/Critical CVE with a fix available.
 
-**Architecture:** Feature 1 adds a setup check to the universal preset that flags existing CLAUDE.md for skill-based review, plus skill guidance for AI agents to audit CLAUDE.md content. Feature 2 adds a standalone `security/` module (not in the preset system) with dep-diff detection, tool runners (pip-audit, npm audit), and a policy engine. A new CLI command orchestrates it.
+**Architecture:** Feature 1 adds a setup check to the universal preset that flags existing CLAUDE.md for skill-based review, plus skill guidance for AI agents to audit CLAUDE.md content. Feature 2 adds a standalone `security/` module (not in the preset system) with osv-scanner as the single vulnerability scanning tool, simple lockfile-based new-package detection, and a policy engine. A new CLI command orchestrates it.
 
-**Tech Stack:** Python 3.11+, Click (CLI), tomlkit (TOML parsing), subprocess (git diff, pip-audit, npm audit), JSON parsing for audit output.
+**Tech Stack:** Python 3.12+, Click (CLI), subprocess (git, osv-scanner), JSON parsing for audit output.
+
+**Post-implementation note:** The original plan used pip-audit + npm-audit with TOML/JSON dep manifest parsing. This was simplified to osv-scanner (single tool, reads lockfiles directly) with string-search-based new-package detection against the base branch lockfile. This reduced the security module from 429 to 343 lines (37% reduction) and eliminated fragile hand-rolled PEP 508 parsing.
 
 ---
 
