@@ -11,9 +11,15 @@
   </p>
   <p align="center">
     <a href="https://pypi.org/project/agentic-harness/"><img src="https://img.shields.io/pypi/v/agentic-harness" alt="PyPI"></a>
+    <a href="https://pypi.org/project/agentic-harness/"><img src="https://img.shields.io/pypi/dm/agentic-harness" alt="Downloads"></a>
     <a href="https://github.com/agentic-eng/agent-harness/actions/workflows/ci.yml"><img src="https://github.com/agentic-eng/agent-harness/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
     <a href="https://www.apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License: Apache 2.0"></a>
     <a href="https://python.org"><img src="https://img.shields.io/badge/python-3.12%2B-blue.svg" alt="Python 3.12+"></a>
+  </p>
+  <p align="center">
+    <img src="https://img.shields.io/badge/Built%20with-Claude%20Code-blueviolet" alt="Built with Claude Code">
+    <img src="https://img.shields.io/badge/Linted%20with-ruff-orange" alt="Linted with ruff">
+    <img src="https://img.shields.io/badge/Policies-OPA%20%2F%20Rego-lightgrey" alt="Policies: OPA / Rego">
   </p>
   <p align="center">
     <a href="#quick-start">Quick Start</a> &middot;
