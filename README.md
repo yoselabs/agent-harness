@@ -4,7 +4,7 @@
     <em>Enforce. Enforce. Enforce.</em>
   </p>
   <p align="center">
-    <strong>AI agents aren't sloppy. The toolchains they inherit are.</strong>
+    <strong>Stop the slop. AI agents aren't sloppy — the toolchains they inherit are.</strong>
   </p>
   <p align="center">
     44 rules &middot; 5 stacks &middot; <500ms &middot; Zero config
