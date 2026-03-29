@@ -7,12 +7,18 @@
     44 rules &middot; 5 stacks &middot; <500ms &middot; Zero config
   </p>
   <p align="center">
+    <a href="https://pypi.org/project/agentic-harness/"><img src="https://img.shields.io/pypi/v/agentic-harness" alt="PyPI"></a>
+    <a href="https://github.com/agentic-eng/agent-harness/actions/workflows/ci.yml"><img src="https://github.com/agentic-eng/agent-harness/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  </p>
+  <p align="center">
     <a href="#quick-start">Quick Start</a> &middot;
     <a href="#stacks">Stacks</a> &middot;
     <a href="#for-ai-agents">For AI Agents</a> &middot;
     <a href="#contributing">Contributing</a>
   </p>
 </p>
+
+> **Note:** The PyPI package is `agentic-harness` (the `agent-harness` name is taken by an unrelated abandoned project — transfer pending). The CLI command is still `agent-harness`.
 
 ---
 
@@ -53,7 +59,7 @@ An agent can't act on *"consider using healthchecks."* It can act on *"FAIL: ser
 
 ```bash
 # Install
-uv tool install agent-harness   # or: pip install agent-harness
+uv tool install agentic-harness   # or: pip install agentic-harness
 
 # Detect stacks + subprojects
 agent-harness detect

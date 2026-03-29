@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install tools
+        run: |
+          uv sync
+          uv tool install -e .
+
+          # Install external tools
+          # conftest
+          CONFTEST_VERSION=0.56.0
+          curl -sL "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz" | tar xz -C /usr/local/bin conftest
+
+          # hadolint
+          HADOLINT_VERSION=2.12.0
+          curl -sL "https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-Linux-x86_64" -o /usr/local/bin/hadolint
+          chmod +x /usr/local/bin/hadolint
+
+          # yamllint
+          uv tool install yamllint
+
+          # gitleaks
+          GITLEAKS_VERSION=8.21.2
+          curl -sL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar xz -C /usr/local/bin gitleaks
+
+          # osv-scanner
+          OSV_VERSION=1.9.1
+          curl -sL "https://github.com/google/osv-scanner/releases/download/v${OSV_VERSION}/osv-scanner_linux_amd64" -o /usr/local/bin/osv-scanner
+          chmod +x /usr/local/bin/osv-scanner
+
+      - name: Lint
+        run: agent-harness lint
+
+      - name: Test
+        run: uv run pytest tests/ -v
+
+      - name: Rego tests
+        run: conftest verify -p src/agent_harness/policies/ --no-color
+
+      - name: Security audit
+        run: agent-harness security-audit
