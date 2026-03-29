@@ -4,7 +4,7 @@
     <strong>Deterministic quality gates for AI-assisted development</strong>
   </p>
   <p align="center">
-    36 rules &middot; 5 stacks &middot; <500ms &middot; Zero config
+    44 rules &middot; 5 stacks &middot; <500ms &middot; Zero config
   </p>
   <p align="center">
     <a href="#quick-start">Quick Start</a> &middot;
@@ -100,7 +100,7 @@ Detected by `Dockerfile`, `docker-compose*.yml`
 | Tool | What it checks |
 |------|---------------|
 | **hadolint** | Dockerfile best practices (DL/SC rules) |
-| **conftest** | Layer ordering, cache mounts, USER directive, HEALTHCHECK, secrets in ENV/ARG, base image pinning |
+| **conftest** | Layer ordering, cache mounts, USER directive, HEALTHCHECK, secrets in ENV/ARG, base image pinning (discovers all Dockerfiles in tree) |
 | **conftest** (compose) | Healthchecks, restart policies, image pinning, port binding, `$$` escaping, no bind mounts, no inline configs |
 
 ### Dokploy
@@ -147,14 +147,31 @@ docker:
   own_image_prefix: "ghcr.io/myorg/"
 ```
 
+### Conftest Exceptions
+
+Skip individual policies per file when legitimate:
+
+```yaml
+docker:
+  conftest_skip:
+    scripts/autonomy/Dockerfile:
+      - dockerfile.user        # runs as root intentionally
+      - dockerfile.healthcheck # not a service
+```
+
+See [SKILL.md](skills/agent-harness/SKILL.md#conftest-exceptions) for the full list of exception IDs.
+
 ## Commands
 
 | Command | Description |
 |---------|-------------|
 | `agent-harness detect` | Show detected stacks and subprojects |
-| `agent-harness init` | Scaffold configs, Makefile, show tool availability (`--yes` for CI) |
-| `agent-harness lint` | Run all checks — exits non-zero on failure (`--all` for monorepo) |
-| `agent-harness fix` | Auto-fix (ruff, biome), then lint (`--all` for monorepo) |
+| `agent-harness init` | Scaffold configs, Makefile, show tool availability |
+| `agent-harness init --apply` | Apply auto-fixes and create missing config files |
+| `agent-harness lint` | Run all checks — exits non-zero on failure |
+| `agent-harness fix` | Auto-fix (ruff, biome), then lint |
+| `agent-harness security-audit` | Scan working dir for vulnerable deps + leaked secrets |
+| `agent-harness security-audit-history` | Deep scan full git history for leaked secrets |
 
 ## For AI Agents
 
@@ -243,7 +260,7 @@ Agent Harness orchestrates external tools — it doesn't embed them:
 
 Actively developed. See [PLANS.md](PLANS.md) for roadmap.
 
-**Current:** 36 Rego policies, 5 stacks (Python, JavaScript, Docker, Dokploy, Universal), 69 Python tests, 87 Rego tests.
+**Current:** 44 Rego deny rules, 5 stacks (Python, JavaScript, Docker, Dokploy, Universal), 201 Python tests, 109 Rego tests.
 
 ## Contributing
 
