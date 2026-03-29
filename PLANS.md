@@ -30,22 +30,37 @@
 - **Workspace discovery** — `workspace.py` finds all `.agent-harness.yml` in the tree, skips excluded dirs
 - 89 Python tests + 87 Rego tests
 
-## Next (v0.3)
+## Done (v0.3 — PyPI, conftest exceptions, multi-Dockerfile, skill redesign)
 
-- Publish to PyPI as `agent-harness`
+- **Published to PyPI** as `agentic-harness` (PEP 541 pending for `agent-harness` name)
+- **GitHub Actions CI/CD** — CI on PRs, publish on tag push via trusted publishers
+- **Git-aware file discovery** — `find_files` replaces hardcoded `SKIP_DIRS`, respects .gitignore
+- **Multi-Dockerfile discovery** — Docker preset finds all Dockerfiles in tree, checks each with hadolint + conftest
+- **Conftest exceptions** — 19 skippable policy IDs via `conftest_skip` in `.agent-harness.yml`
+- **Project detection fix** — Docker-only directories no longer treated as subprojects
+- **Init scaffold fix** — subprojects only get `.agent-harness.yml` + `.yamllint.yml`
+- **Gitignore grouped append** — additions grouped by source template
+- **Security audit** — osv-scanner + gitleaks, `security-audit` for working dir, `security-audit-history` for git history
+- **Pre-commit hooks check** — lint verifies hooks are installed
+- **SKILL.md redesign** — 3-phase product experience (Discover → Plan → Execute)
+- **CONTRIBUTING.md** — uses agent-harness to develop agent-harness
+- 44 Rego deny rules, 201 Python tests, 109 Rego tests
+
+## Next (v0.4)
+
+- **CLI init redesign** — richer narrative output matching the skill's 3-phase experience
 - GitHub Actions workflow validation policies
 - `.pre-commit-config.yaml` validation policies
-- Dockerfile secrets check: detect hardcoded values, not just suspicious key names
 
-## Future (v0.3+)
+## Future
 
+- **Extensibility / custom presets** — enterprise teams bring their own policy bundles, custom presets, and tool configurations. Plugin system for adding stacks and rules without forking.
 - Go stack module (golangci-lint, go test, go vet)
 - `agent-harness upgrade` — pull latest policies without reinstalling
 - Policy bundle versioning — pin and bump policy versions per project
 - Config generation — `init` generates pyproject.toml ruff/coverage/pytest sections
 - CLAUDE.md / AGENTS.md generation — `init` creates agent context file
 - check-jsonschema integration (Compose schema, GitHub Actions schema validation)
-- Makefile generation (for projects that still want make targets)
 
 ## Non-goals
 
