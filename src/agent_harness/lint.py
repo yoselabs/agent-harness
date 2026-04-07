@@ -25,7 +25,13 @@ def _is_skipped(check_name: str, skip_patterns: list[str]) -> bool:
 def run_lint(project_dir: Path) -> list[CheckResult]:
     config = load_config(project_dir)
     exclude = get_excluded_patterns(config.get("exclude", []))
-    skip = config.get("skip", [])
+    skip_raw = config.get("skip", [])
+    if isinstance(skip_raw, str):
+        skip = [skip_raw]
+    elif isinstance(skip_raw, list):
+        skip = skip_raw
+    else:
+        skip = []
     results = UNIVERSAL.run_checks(project_dir, config, exclude)
     for preset in PRESETS:
         if preset.name in config.get("stacks", set()):

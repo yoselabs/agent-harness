@@ -38,6 +38,18 @@ def _init_git(path):
     subprocess.run(["git", "add", "."], cwd=str(path), capture_output=True)
 
 
+def test_skip_string_coercion(tmp_path):
+    """A bare string `skip: typecheck` should be coerced to a list."""
+    (tmp_path / ".agent-harness.yml").write_text("stacks: []\nskip: yamllint\n")
+    (tmp_path / ".gitignore").write_text("")
+    _init_git(tmp_path)
+    results = run_lint(tmp_path)
+    yamllint_results = [r for r in results if r.name == "yamllint"]
+    assert len(yamllint_results) == 1
+    assert yamllint_results[0].passed
+    assert "Skipped" in yamllint_results[0].output
+
+
 def test_skip_replaces_result_with_pass(tmp_path):
     """Skipped checks should appear as passed with skip message."""
     (tmp_path / ".agent-harness.yml").write_text("stacks: []\nskip:\n  - yamllint\n")
