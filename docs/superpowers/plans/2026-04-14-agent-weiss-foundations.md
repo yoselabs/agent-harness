@@ -37,10 +37,10 @@
 
 Run:
 ```bash
-gh repo create yoselabs/agent-weiss --public --description "Skill-first agent-readiness audit and setup for any codebase" --confirm
+gh repo create yoselabs/agent-weiss --public --description "Skill-first agent-readiness audit and setup for any codebase"
 ```
 
-Expected: `https://github.com/yoselabs/agent-weiss` URL returned.
+Expected: prompts for confirmation (`--confirm` is deprecated in newer `gh`); answer yes if prompted. Returns the repo URL.
 
 - [ ] **Step 2: Clone locally**
 
@@ -311,6 +311,14 @@ class PrescribedSchema:
     install: dict[str, str] = field(default_factory=dict)
     config_fragment: dict[str, Any] = field(default_factory=dict)
     depends_on: list[str] = field(default_factory=list)
+
+
+# applies_to vocabulary (v1):
+# - "any" — applies to any project regardless of stack
+# - "<profile_id>" — applies when this profile matches (e.g., "python", "typescript", "docker")
+# - The list is OR-ed: `["python", "typescript"]` means applies if either profile matches.
+# Validation does NOT enforce vocabulary in v1 (free-form strings); profile matchers in
+# Plan 3+4 will define which strings are recognized. Keep entries lowercase, hyphenated.
 
 
 _REQUIRED_FIELDS = ("id", "version", "what", "why", "applies_to")
@@ -812,6 +820,12 @@ import pytest
 from agent_weiss.lib.bundle import resolve_bundle_root, BundleNotFoundError
 
 
+@pytest.fixture(autouse=True)
+def _isolate_env(monkeypatch: pytest.MonkeyPatch):
+    """Always start each test with AGENT_WEISS_BUNDLE unset, so external env doesn't leak in."""
+    monkeypatch.delenv("AGENT_WEISS_BUNDLE", raising=False)
+
+
 def test_resolve_via_env_var(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """AGENT_WEISS_BUNDLE env var takes precedence over probe order."""
     bundle = tmp_path / "my-bundle"
@@ -831,10 +845,8 @@ def test_env_var_pointing_to_invalid_dir_raises(tmp_path: Path, monkeypatch: pyt
         resolve_bundle_root()
 
 
-def test_resolve_via_probe(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def test_resolve_via_probe(tmp_path: Path):
     """With env var unset, probe walks the candidate paths in order."""
-    monkeypatch.delenv("AGENT_WEISS_BUNDLE", raising=False)
-
     candidate = tmp_path / "fake-claude-plugins" / "yoselabs" / "agent-weiss"
     candidate.mkdir(parents=True)
     (candidate / "bundle.yaml").write_text("version: '0.0.1'\nfiles: {}\n")
@@ -842,9 +854,8 @@ def test_resolve_via_probe(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     assert resolve_bundle_root(probe_paths=[candidate]) == candidate
 
 
-def test_no_bundle_anywhere_raises(monkeypatch: pytest.MonkeyPatch):
+def test_no_bundle_anywhere_raises():
     """If env var unset and probe finds nothing, raise."""
-    monkeypatch.delenv("AGENT_WEISS_BUNDLE", raising=False)
     with pytest.raises(BundleNotFoundError):
         resolve_bundle_root(probe_paths=[Path("/nonexistent/a"), Path("/nonexistent/b")])
 ```
@@ -1375,17 +1386,21 @@ This control verifies that `AGENTS.md` exists at the project root. It's the simp
 Create `tests/test_fixture_runner.py`:
 
 ```python
-"""Run check.sh against pass/ and fail/ fixtures, assert expected exit codes.
+"""Run check.sh against pass/ and fail/ fixtures, validate via the contract parser.
 
 This is the canonical pattern for testing every control in agent-weiss:
 each control ships with a pass/ fixture (control should report pass) and a
-fail/ fixture (control should report fail or setup-unmet).
+fail/ fixture (control should report fail or setup-unmet). Both stdout and
+exit code are validated through parse_check_output, which enforces the
+contract (status field present, status matches exit code, valid JSON).
 """
 from __future__ import annotations
 import subprocess
 from pathlib import Path
 
 import pytest
+
+from agent_weiss.lib.contract import Status, parse_check_output
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PROFILES = REPO_ROOT / "profiles"
@@ -1413,6 +1428,7 @@ def _control_check_sh(fixture_control_dir: Path) -> Path:
 
 @pytest.mark.parametrize("fixture_control_dir", _discover_controls(), ids=lambda p: str(p.relative_to(FIXTURES)))
 def test_control_passes_on_pass_fixture(fixture_control_dir: Path):
+    """Pass fixture must produce status=pass via the contract parser."""
     check_sh = _control_check_sh(fixture_control_dir)
     assert check_sh.exists(), f"missing check.sh at {check_sh}"
 
@@ -1423,14 +1439,16 @@ def test_control_passes_on_pass_fixture(fixture_control_dir: Path):
         capture_output=True,
         text=True,
     )
-    assert result.returncode == 0, (
-        f"expected exit 0 in {pass_dir}\n"
-        f"stdout={result.stdout!r}\nstderr={result.stderr!r}"
+    parsed = parse_check_output(stdout=result.stdout, exit_code=result.returncode)
+    assert parsed.status is Status.PASS, (
+        f"expected status=pass in {pass_dir}, got {parsed.status.value}\n"
+        f"summary={parsed.summary!r}"
     )
 
 
 @pytest.mark.parametrize("fixture_control_dir", _discover_controls(), ids=lambda p: str(p.relative_to(FIXTURES)))
 def test_control_fails_on_fail_fixture(fixture_control_dir: Path):
+    """Fail fixture must produce status=fail OR status=setup-unmet via the contract parser."""
     check_sh = _control_check_sh(fixture_control_dir)
     assert check_sh.exists(), f"missing check.sh at {check_sh}"
 
@@ -1441,9 +1459,10 @@ def test_control_fails_on_fail_fixture(fixture_control_dir: Path):
         capture_output=True,
         text=True,
     )
-    assert result.returncode != 0, (
-        f"expected non-zero exit in {fail_dir}\n"
-        f"stdout={result.stdout!r}\nstderr={result.stderr!r}"
+    parsed = parse_check_output(stdout=result.stdout, exit_code=result.returncode)
+    assert parsed.status in (Status.FAIL, Status.SETUP_UNMET), (
+        f"expected status=fail or setup-unmet in {fail_dir}, got {parsed.status.value}\n"
+        f"summary={parsed.summary!r}"
     )
 ```
 
@@ -1771,6 +1790,8 @@ for anomaly in report.anomalies:
     ...
 ```
 
+> Plan 1 limitation: orphan detection only scans `.agent-weiss/policies/`. Files prescribed at other paths (e.g., `.pre-commit-config.yaml`) get ghost detection but not orphan detection. Plan 3 will broaden this.
+
 For each anomaly returned (orphan / ghost / locally_modified), prompt the user
 with the appropriate choice set per spec §6 "Reconciliation." Do not silently
 delete or reclassify files.
@@ -1884,9 +1905,17 @@ jobs:
       - name: Install deps
         run: uv sync
 
+      - name: Install conftest (required by Plan 2 controls)
+        run: |
+          CONFTEST_VERSION=0.56.0
+          curl -sL "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz" \
+            | sudo tar xz -C /usr/local/bin conftest
+
       - name: Run pytest
         run: uv run pytest -v
 ```
+
+> Note: conftest is installed proactively. Plan 1 ships zero Rego policies, but Plan 2 adds them, and a CI break on the first Plan 2 PR would be confusing. Cheap to install now.
 
 - [ ] **Step 2: Commit and verify CI passes**
 
@@ -1921,7 +1950,9 @@ If failure, inspect with `gh run view --log-failed` and fix before proceeding to
 
 - [ ] **Step 1: Walk the spec sections and confirm Plan 1 coverage**
 
-Open `docs/spec.md` (or the original at `agent-harness/docs/superpowers/specs/2026-04-14-agent-weiss-design.md`) and verify each major spec section has a corresponding implementation:
+Open the local copy `/Users/iorlas/Workspaces/agent-weiss/docs/spec.md` (a copy was made in Task 0). The canonical spec lives in the agent-harness repo at `/Users/iorlas/Workspaces/agent-harness/docs/superpowers/specs/2026-04-14-agent-weiss-design.md` — refer there if any conflict.
+
+Verify each major spec section has a corresponding implementation:
 
 | Spec section | Plan 1 task |
 |---|---|
@@ -1938,9 +1969,20 @@ Open `docs/spec.md` (or the original at `agent-harness/docs/superpowers/specs/20
 
 This is a sanity check. If any required-for-MVP piece is missing, add a task before declaring Plan 1 complete.
 
-- [ ] **Step 2: Check roadmap status**
+- [ ] **Step 2: Update roadmap status (cross-repo edit)**
 
-Open `agent-harness/docs/superpowers/plans/2026-04-14-agent-weiss-roadmap.md` and update Plan 1 status to "Done" once all Plan 1 tasks above are committed and CI is green.
+The roadmap lives in the **agent-harness** repo, not agent-weiss. Open the absolute path:
+
+`/Users/iorlas/Workspaces/agent-harness/docs/superpowers/plans/2026-04-14-agent-weiss-roadmap.md`
+
+Update Plan 1 status from `Active` to `Done` in the Plan sequence table. Then commit and push from the agent-harness repo:
+
+```bash
+cd /Users/iorlas/Workspaces/agent-harness
+git add docs/superpowers/plans/2026-04-14-agent-weiss-roadmap.md
+git commit -m "roadmap: mark agent-weiss Plan 1 (Foundations) complete"
+git push
+```
 
 - [ ] **Step 3: Tag the milestone**
 
@@ -1958,7 +2000,11 @@ git push origin foundations-mvp
 Before declaring Plan 1 done:
 - [ ] All 13 tasks committed and pushed
 - [ ] CI green on `main`
-- [ ] `pytest -v` passes locally with at least one fixture-runner test (the universal.docs.agents-md-present pair)
-- [ ] `python -m agent_weiss.lib.bundle` resolves the bundle when AGENT_WEISS_BUNDLE points to the repo root
-- [ ] Roadmap updated: Plan 1 → Done, Plan 2 → Active (and assigned)
+- [ ] `uv run pytest -v` passes locally with at least one fixture-runner test (the universal.docs.agents-md-present pair)
+- [ ] Bundle resolution sanity check passes — run from the agent-weiss repo root:
+  ```bash
+  AGENT_WEISS_BUNDLE=$(pwd) uv run python -c "from agent_weiss.lib.bundle import resolve_bundle_root; print(resolve_bundle_root())"
+  ```
+  Expected: prints the absolute path to the agent-weiss repo root.
+- [ ] Roadmap updated in agent-harness repo: Plan 1 → Done, Plan 2 → Active
 - [ ] No TODO / TBD / "fix later" markers in code
