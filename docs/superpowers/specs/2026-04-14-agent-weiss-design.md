@@ -7,6 +7,7 @@
 **Revision history:**
 - 2026-04-14 v1 — initial design
 - 2026-04-14 v2 — code-review revision: locked bundle versioning, replaced header-based source detection with state-file path+hash, added concrete score formulas, added Approval UX subsection, declared POSIX/WSL stance, added 4th source class (prescribed-locally-modified), added skill testing strategy.
+- 2026-04-14 v3 — third-pass review revision: defined distribution (Claude marketplace + PyPI + npm mirrors), added self-healing reconciliation step (replaces transactional writes), defined `check.sh` output contract, made Setup score re-evaluation explicit, sharpened header consistency rule.
 
 ---
 
@@ -40,6 +41,28 @@ Named after Grimoire Weiss from NieR — the white sentient grimoire that accomp
 - **Native Windows** — explicitly unsupported in v1; revisit on demand
 
 This matches agent-harness's posture and aligns with how most Claude Code/Codex/Cursor workflows are run today.
+
+### Distribution (v1)
+
+The skill ships through three channels, all built from the same source:
+
+| Channel | Audience | Install |
+|---|---|---|
+| **Claude Code marketplace** (primary) | Claude Code users | `claude plugin install yoselabs/agent-weiss` (or via marketplace UI) |
+| **PyPI** | Users who prefer Python tooling | `uv tool install agent-weiss` |
+| **npm** | Users who prefer Node tooling | `pnpm add -g agent-weiss` (or `npm i -g`) |
+
+All three install the same skill bundle (markdown + scripts + `bundle.yaml` + profiles tree) into a known location:
+
+| Channel | Bundle location |
+|---|---|
+| Claude marketplace | `~/.claude/plugins/yoselabs/agent-weiss/` |
+| PyPI | `<python-env>/share/agent-weiss/` |
+| npm | `<node-prefix>/share/agent-weiss/` |
+
+The skill resolves its bundle root via an environment variable `AGENT_WEISS_BUNDLE` (set by the installer) or defaults to a probe order (Claude → PyPI → npm). This is what `prescribed_files[*].bundle_path` resolves against.
+
+Updates: re-run the install command. Drift detection compares the project's recorded `bundle_version` against the currently-installed bundle's `bundle_version`.
 
 ---
 
@@ -88,7 +111,30 @@ Each control combines four artifacts:
 | Existence | `test -f` / `stat` | `test -f CLAUDE.md` |
 | Judgment | `check.sh` omitted; agent reads `instruct.md` and reports | "Does CLAUDE.md describe architecture well?" |
 
-**Tool-missing behavior:** if `check.sh` requires a tool that isn't installed, it exits with a documented sentinel code (e.g., 127) and a one-line instruction (e.g., `install with: uv add ruff`). The skill treats this as **Setup-unmet** for that control (not Quality-failed). Auto-install is out of scope.
+### `check.sh` output contract
+
+Every `check.sh` MUST emit exactly one JSON line on stdout and exit with one of three codes:
+
+```json
+{"status": "pass", "findings_count": 0, "summary": "ruff: 0 issues across 47 files"}
+{"status": "fail", "findings_count": 8, "summary": "ruff: 8 issues in src/handlers/", "details_path": "/tmp/agent-weiss-<run>/ruff.log"}
+{"status": "setup-unmet", "summary": "ruff not installed", "install": "uv add --dev ruff"}
+```
+
+| Field | Required when | Notes |
+|---|---|---|
+| `status` | always | One of `pass`, `fail`, `setup-unmet` |
+| `findings_count` | `pass`, `fail` | Integer; 0 for pass, ≥1 for fail |
+| `summary` | always | One-line human-readable; surfaces in the score report |
+| `install` | `setup-unmet` | Suggested install command (skill never auto-runs) |
+| `details_path` | optional, `fail` | Path to a longer log the user can inspect |
+
+Exit codes:
+- `0` — `status: pass`
+- `1` — `status: fail` (real quality failure)
+- `127` — `status: setup-unmet` (tool missing or required config absent)
+
+The skill parses stdout for reporting and uses the exit code for routing. Anything outside this contract is treated as a control authoring bug (skill flags the control as broken in its self-test).
 
 ### Repository layout (skill bundle)
 
@@ -251,7 +297,9 @@ user-project/
   .pre-commit-config.yaml                    # written/updated; hooks include `conftest test -p .agent-weiss/policies/`
 ```
 
-The header comment in copied files is **a courtesy, not load-bearing**. Source-of-truth is the `prescribed_files` map in `.agent-weiss.yaml`. If the header is removed or the file is renamed, the state file's path entry is what determines classification.
+The header comment in copied files is a human courtesy. Source-of-truth is the `prescribed_files` map in `.agent-weiss.yaml`. If the header is out of sync with state (missing, edited, or pointing to a wrong source), the state file wins.
+
+**Header maintenance rule:** the skill always writes headers consistent with state, but never *requires* them to be present for classification. If a user (or another agent) reads a file and uses the header to make a decision, that's accepted risk — but the skill itself never relies on the header. If state and header conflict, the skill prompts the user to choose which to trust on the next reconcile pass.
 
 **`conftest.toml`** mentioned in v1 of this spec has been dropped — `conftest`'s policy directory is configured directly via `--policy` in the pre-commit hook command, no separate config file needed.
 
@@ -302,15 +350,33 @@ Single state-aware loop. Behavior varies based on `.agent-weiss.yaml` presence a
 ### Steps
 
 1. **Detect** — read `.agent-weiss.yaml` if present; scan repo for stack signals (pyproject.toml, package.json, Dockerfile, lockfiles)
-2. **Match profiles** — confirm with user: "I detected python + docker. Add or remove any?"
-3. **Setup phase** — gap analysis + per-change approval (see Approval UX below)
-4. **Verify phase** — smoke test:
-   - Run all controls' `check.sh` (where defined)
-   - Tool-missing exits → control is Setup-unmet, prompt user with install command
-   - Real failures (lint issues, test failures, security findings) → Quality-failed
-5. **Score** — compute Setup score and Quality score per formulas (see §7)
-6. **Report** — score breakdown by domain, list of findings, drift status, custom policies summary
-7. **Update `.agent-weiss.yaml`** — overrides, custom-policy review status, prescribed_files map updates, scores, drift records
+2. **Reconcile** — self-healing scan (see Reconciliation below): compare state file against disk; detect orphans, ghosts, partial-write artifacts; prompt user to resolve before continuing.
+3. **Match profiles** — confirm with user: "I detected python + docker. Add or remove any?"
+4. **Setup phase** — gap analysis + per-change approval (see Approval UX below)
+5. **Verify phase** — smoke test:
+   - Run all controls' `check.sh` (where defined) — see output contract in §3
+   - `setup-unmet` (exit 127) → control is Setup-unmet, prompt user with install command from JSON output
+   - `fail` (exit 1) → control is Quality-failed, surface findings_count and summary
+6. **Score** — compute Setup score and Quality score per formulas (see §7). Setup score is **always re-evaluated against the current run's reconcile + verify state** — never cached. A tool uninstalled since last run flips that control back to Setup-unmet today.
+7. **Report** — score breakdown by domain, list of findings, drift status, custom policies summary
+8. **Update `.agent-weiss.yaml`** — overrides, custom-policy review status, prescribed_files map updates, scores, drift records
+
+### Reconciliation (self-healing)
+
+The skill writes multiple files per run (state, policies, hooks). It does NOT do transactional/atomic writes — instead, the next run reconciles. This handles interrupted runs, manual file moves/deletes/renames, and unexpected state.
+
+On each run, before setup phase:
+
+1. For every entry in `prescribed_files`, check if the file exists at the recorded path:
+   - **Exists, hash matches recorded** → clean prescribed
+   - **Exists, hash mismatch** → prescribed-locally-modified (handle per §5)
+   - **Missing** → ghost; prompt: "I tracked `<path>` as a prescribed file but can't find it. Was it deleted intentionally? [restore from bundle / remove from tracking / cancel]"
+2. For every file in `.agent-weiss/policies/` not in `prescribed_files`:
+   - It's an orphan; prompt: "`<path>` is in your policies dir but not tracked. Possibilities: you added a custom policy, a prior run was interrupted before updating state, or a renamed file. [track as custom / restore from bundle (if bundle_path matches) / delete / leave for review]"
+3. For every entry in `prescribed_files` whose recorded `bundle_path` no longer exists in the installed bundle (e.g., bundle removed a control):
+   - Prompt: "`<bundle_path>` no longer exists in agent-weiss bundle. Your local file is now orphaned-prescribed. [keep as custom / delete with backup / leave]"
+
+Reconciliation is conversational and requires explicit user action for each anomaly. No silent deletion, no silent re-classification.
 
 ### Approval UX (the conversation pattern)
 
@@ -484,10 +550,14 @@ This gives us a single command to verify every control end-to-end, mirroring `ma
 
 These remain open and should be resolved during plan-writing or early implementation:
 
-- **Skill packaging:** `.skill` directory, npm package, PyPI package, or installer script? How does a user install agent-weiss? (Affects how `bundle.yaml` ships.)
-- **Tool-installation prompt format:** which exact command per OS? (e.g., `brew install gitleaks` vs `apt install gitleaks` vs `nix-shell -p gitleaks`.) Probably a `prescribed.yaml` field.
-- **`bundle.yaml` schema:** what exactly does the bundle manifest contain? Per-file SHA index? Profile metadata? Versions of bundled tool configs? Settle in plan-writing.
-- **Custom-policy review trigger (when v2 lands):** opt-in per scan via flag, or always-on with skip option? Defer until v2 design.
+- **`prescribed.yaml` schema:** every control has one but no example exists in this spec. First plan task: define the schema (tool name, version constraint, config-fragment, install hint, dependencies on other controls). Settle before writing more than 1–2 controls.
+- **`bundle.yaml` schema:** what exactly does the bundle manifest contain? At minimum: bundle version, per-file SHA index for drift detection. May also include profile metadata, tool-version pins. Define alongside `prescribed.yaml` schema.
+- **Tool-installation prompt format per OS:** which exact command per OS? (e.g., `brew install gitleaks` vs `apt install gitleaks` vs `nix-shell -p gitleaks`.) Probably a structured `prescribed.yaml` field with per-OS commands.
+- **Pre-commit config merging:** multiple controls may want to add hooks to the same `.pre-commit-config.yaml`. Define merge strategy (append-if-absent, dedupe by hook id) before implementing the second control that touches it.
+- **Approval UX edge cases:** "approve all" friction (require typed confirmation when changes > N?), domain-wide override shortcut for established teams.
+- **Returning-user merge UX:** "merge interactively" for prescribed-locally-modified files needs concrete shape (3-way diff walk, agent-proposed merge, etc.). Critical for retention; design before first bundle update lands.
+- **Local/third-party profiles:** can users add profiles outside the bundle (e.g., `.agent-weiss/profiles/go/...`)? If yes, `prescribed_files[*].bundle_path` needs a source identifier (bundle vs local). Defer to v2 if not v1.
+- **Custom-policy review trigger (when v2 lands):** opt-in per scan via flag, or always-on with skip option?
 
 ---
 
