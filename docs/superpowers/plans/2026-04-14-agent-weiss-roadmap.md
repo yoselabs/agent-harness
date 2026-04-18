@@ -105,7 +105,7 @@ These are guidance, not gates:
 
 | # | Plan | Status | File | Depends on |
 |---|---|---|---|---|
-| 1 | **Foundations (MVP)** | Active | `2026-04-14-agent-weiss-foundations.md` | — |
+| 1 | **Foundations (MVP)** | Done | `2026-04-14-agent-weiss-foundations.md` | — |
 | 2 | Control Library Build-Out | Pending | TBD | Plan 1 |
 | 3 | Setup Workflow & Approval UX | Pending | TBD | Plan 1 |
 | 4 | Verify Workflow & Scoring | Pending | TBD | Plan 1 |
